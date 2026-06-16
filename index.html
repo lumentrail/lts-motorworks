@@ -754,6 +754,10 @@ document.getElementById('footer-year').textContent = new Date().getFullYear();
 </script>
 <script>
 (function(){
+// ─── SITE CONFIG — edit these when moving accounts ───────────────────────────
+var APPT_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxsaVeEuSSXkRVAGrIna4wvBUIZcQPA0A342i-MbCT_wC93dEVO5F1SwYA1hXPpYi60/exec';
+var APPT_OWNER_EMAIL = 'ltsmotorworks@gmail.com';
+// ─────────────────────────────────────────────────────────────────────────────
 var CD={'Acura':['ILX','Integra','MDX','NSX','RDX','TLX'],'Alfa Romeo':['Giulia','Stelvio','Tonale'],'Audi':['A3','A4','A5','A6','A7','A8','e-tron','Q3','Q5','Q7','Q8','R8','RS3','RS5','RS6','S3','S4','S5','TT'],'Bentley':['Bentayga','Continental GT','Flying Spur'],'BMW':['2 Series','3 Series','4 Series','5 Series','7 Series','8 Series','i3','i4','i5','iX','M2','M3','M4','M5','X1','X2','X3','X4','X5','X6','X7','XM','Z4'],'Buick':['Enclave','Encore','Encore GX','Envision','LaCrosse'],'Cadillac':['CT4','CT5','Escalade','Escalade ESV','LYRIQ','XT4','XT5','XT6'],'Chevrolet':['Blazer','Camaro','Colorado','Corvette','Equinox','Malibu','Silverado 1500','Silverado 2500HD','Silverado 3500HD','Spark','Suburban','Tahoe','Trailblazer','Traverse','Trax'],'Chrysler':['300','Pacifica','Voyager'],'Dodge':['Challenger','Charger','Durango','Grand Caravan','Hornet'],'Ferrari':['296 GTB','488','812 Superfast','F8','Portofino','Roma','SF90'],'Ford':['Bronco','Bronco Sport','EcoSport','Edge','Escape','Expedition','Explorer','F-150','F-250 Super Duty','F-350 Super Duty','Fusion','Maverick','Mustang','Mustang Mach-E','Ranger','Transit','Transit Connect'],'Genesis':['G70','G80','G90','GV70','GV80'],'GMC':['Acadia','Canyon','Sierra 1500','Sierra 2500HD','Sierra 3500HD','Terrain','Yukon','Yukon XL'],'Honda':['Accord','Civic','CR-V','Element','Fit','HR-V','Insight','Odyssey','Passport','Pilot','Prologue','Ridgeline'],'Hyundai':['Accent','Elantra','Ioniq 5','Ioniq 6','Kona','Palisade','Santa Cruz','Santa Fe','Sonata','Tucson','Veloster'],'Infiniti':['G35','G37','Q50','Q60','QX50','QX55','QX60','QX80'],'Jaguar':['E-Pace','F-Pace','F-Type','I-Pace','XE','XF','XJ'],'Jeep':['Cherokee','Compass','Gladiator','Grand Cherokee','Grand Wagoneer','Renegade','Wagoneer','Wrangler'],'Kia':['Carnival','EV6','Forte','K5','Niro','Seltos','Sorento','Soul','Sportage','Stinger','Telluride'],'Lamborghini':['Aventador','Huracan','Revuelto','Urus'],'Land Rover':['Defender','Discovery','Discovery Sport','Range Rover','Range Rover Evoque','Range Rover Sport','Range Rover Velar'],'Lexus':['ES','GS','GX','IS','LC','LS','LX','NX','RC','RX','UX'],'Lincoln':['Aviator','Corsair','MKZ','Nautilus','Navigator'],'Maserati':['Ghibli','GranTurismo','Grecale','Levante','Quattroporte'],'Mazda':['3','6','CX-30','CX-5','CX-50','CX-90','MX-5 Miata','MX-30'],'Mercedes-Benz':['A-Class','AMG GT','C-Class','CLA','CLS','E-Class','EQE','EQS','G-Class','GLA','GLB','GLC','GLE','GLS','S-Class','SL','Sprinter'],'Mini':['Clubman','Convertible','Cooper','Cooper S','Countryman'],'Mitsubishi':['Eclipse Cross','Lancer','Outlander','Outlander Sport','Outlander PHEV'],'Nissan':['370Z','400Z','Altima','Armada','Frontier','GT-R','Kicks','Leaf','Maxima','Murano','Pathfinder','Rogue','Sentra','Titan','Versa'],'Porsche':['718 Boxster','718 Cayman','911','Cayenne','Macan','Panamera','Taycan'],'RAM':['1500','2500','3500','ProMaster','ProMaster City'],'Rolls-Royce':['Cullinan','Ghost','Phantom','Spectre','Wraith'],'Subaru':['Ascent','BRZ','Crosstrek','Forester','Impreza','Legacy','Outback','Solterra','WRX'],'Tesla':['Cybertruck','Model 3','Model S','Model X','Model Y'],'Toyota':['4Runner','bZ4X','Camry','Corolla','Corolla Cross','Crown','GR86','GR Corolla','GR Supra','Highlander','Land Cruiser','Prius','RAV4','Sequoia','Sienna','Tacoma','Tundra','Venza'],'Volkswagen':['Arteon','Atlas','Atlas Cross Sport','Golf GTI','Golf R','ID.4','Jetta','Passat','Taos','Tiguan'],'Volvo':['C40 Recharge','S60','S90','V60','V90','XC40','XC60','XC90'],'Other':['See description below']};
 var cA,cB,cOp;
 function init(){
@@ -804,18 +808,17 @@ window.submitBooking=function(e){
   var d={name:name,phone:phone,email:email,year:year,make:make,model:model,vehicle:vehicle,date:date,time:time,desc:desc||'No additional notes.'};
   var btn=document.getElementById('bf-submit');btn.disabled=true;btn.textContent='Sending…';
   // Send via Google Apps Script relay — replace SCRIPT_URL with your deployed web app URL
-  var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxsaVeEuSSXkRVAGrIna4wvBUIZcQPA0A342i-MbCT_wC93dEVO5F1SwYA1hXPpYi60/exec';
-  if(SCRIPT_URL==='YOUR_GOOGLE_APPS_SCRIPT_URL'){
+  if(!APPT_SCRIPT_URL||APPT_SCRIPT_URL==='YOUR_GOOGLE_APPS_SCRIPT_URL'){
     btn.disabled=false;btn.textContent='Request Appointment →';
     msg('Email relay not configured yet. Please call <a href="tel:+18478775467">(847) 877-5467</a> to schedule.',false);
     return;
   }
-  fetch(SCRIPT_URL,{
+  fetch(APPT_SCRIPT_URL,{
     method:'POST',
     mode:'no-cors',
     headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({
-      owner_email:'ltsmotorworks@gmail.com',
+      owner_email:APPT_OWNER_EMAIL,
       subject:'New Appt Request — '+vehicle,
       html_body:oEmail(d),
       reply_to:email,
