@@ -840,7 +840,7 @@ window.submitBooking=function(e){
   var d={name:name,phone:phone,email:email,year:year,make:make,model:model,vehicle:vehicle,date:date,time:time,desc:desc||'No additional notes.'};
   var btn=document.getElementById('bf-submit');btn.disabled=true;btn.textContent='Sending…';
   // Send via Google Apps Script relay — replace SCRIPT_URL with your deployed web app URL
-  var SCRIPT_URL='YOUR_GOOGLE_APPS_SCRIPT_URL';
+  var SCRIPT_URL='https://script.google.com/macros/s/AKfycbxsaVeEuSSXkRVAGrIna4wvBUIZcQPA0A342i-MbCT_wC93dEVO5F1SwYA1hXPpYi60/exec';
   if(SCRIPT_URL==='YOUR_GOOGLE_APPS_SCRIPT_URL'){
     btn.disabled=false;btn.textContent='Request Appointment →';
     msg('Email relay not configured yet. Please call <a href="tel:+18476232234">(847) 623-2234</a> to schedule.',false);
