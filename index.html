@@ -615,6 +615,7 @@ footer { background: #34353b; padding: 56px 48px 28px; border-top: 1px solid var
         <h2 class="section-title">Visit <span>Us</span></h2>
         <div class="info-row"><div class="info-icon"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 3C9.6 3 6 6.6 6 11c0 6.5 8 16 8 16s8-9.5 8-16c0-4.4-3.6-8-8-8z" stroke="#1c1d22" stroke-width="1.8"/><circle cx="14" cy="11" r="3" stroke="#cc1111" stroke-width="1.8"/></svg></div><div><div class="info-label">Address</div><div class="info-value">1725 Wood St, Round Lake Beach, IL 60073</div></div></div>
         <div class="info-row"><div class="info-icon"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 5h5l2.5 5-3 2a14 14 0 006.5 6.5l2-3 5 2.5v5a2 2 0 01-2 2C9 25 3 19 3 7a2 2 0 012-2z" stroke="#1c1d22" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 5a8 8 0 015 5M18 9a3 3 0 012 2" stroke="#cc1111" stroke-width="1.5" stroke-linecap="round"/></svg></div><div><div class="info-label">Phone</div><div class="info-value"><a href="tel:+18478775467">(847) 877-5467</a></div></div></div>
+        <div class="info-row"><div class="info-icon"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="7" width="20" height="15" rx="2" stroke="#1c1d22" stroke-width="1.8"/><path d="M4 11l10 7 10-7" stroke="#cc1111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="info-label">Email</div><div class="info-value"><a href="mailto:ltsmotorworks@gmail.com">ltsmotorworks@gmail.com</a></div></div></div>
         <div class="info-row"><div class="info-icon"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="14" cy="14" r="10" stroke="#1c1d22" stroke-width="1.8"/><path d="M14 8v7l4.5 3" stroke="#cc1111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="info-label">Hours</div><div class="info-value"><table class="hours-table"><tr><td>Mon – Fri</td><td>8:00 AM – 6:00 PM</td></tr><tr><td>Saturday</td><td>8:00 AM – 2:00 PM</td></tr><tr><td>Sunday</td><td>Closed</td></tr></table></div></div></div>
       </div>
       <div>
@@ -814,7 +815,7 @@ window.submitBooking=function(e){
     mode:'no-cors',
     headers:{'Content-Type':'text/plain'},
     body:JSON.stringify({
-      owner_email:'corefocus@gmail.com',
+      owner_email:'ltsmotorworks@gmail.com',
       subject:'New Appt Request — '+vehicle,
       html_body:oEmail(d),
       reply_to:email,
