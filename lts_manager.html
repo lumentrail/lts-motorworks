@@ -423,6 +423,10 @@ html, body { height: 100%; overflow: hidden; font-family: 'Poppins', sans-serif;
           <div class="global-grid"><div class="global-item"><label>Top / Footer BG</label><input type="color" id="g-topbar" value="#34353b" oninput="dpGlobal('--topbar', this.value)"></div></div>
         </div>
         <div class="sec">
+          <div class="sec-label">Hero Content Position</div>
+          <div class="row"><label>Move Up / Down</label><input type="range" id="g-hero-nudge" min="-300" max="100" value="-100" oninput="adjustHeroNudge(this.value)"><span class="val" id="g-hero-nudge-val">-100px</span></div>
+        </div>
+        <div class="sec">
           <div class="sec-label">Nav CTA Button</div>
           <div class="row"><label>Vertical Offset</label><input type="range" id="g-cta-y" min="-20" max="20" value="0" oninput="adjustCtaY(this.value); document.getElementById('g-cta-y-val').textContent=this.value+'px'"><span class="val" id="g-cta-y-val">0px</span></div>
         </div>
@@ -715,6 +719,12 @@ function applyTextEdit(val) {
 function dpApply(prop, val) { if (selectedEl) selectedEl.style[prop] = val; }
 function dpGlobal(v, val) { if (!frameDoc) return; frameDoc.documentElement.style.setProperty(v, val); cssVarChanges[v] = val; }
 function dpGlobalFont(val) { if (frameDoc) frameDoc.body.style.fontSize = val+'px'; }
+function adjustHeroNudge(val) {
+  var doc = frame ? frame.contentDocument : null;
+  if (!doc) return;
+  doc.documentElement.style.setProperty('--hero-nudge', val + 'px');
+  document.getElementById('g-hero-nudge-val').textContent = val + 'px';
+}
 function adjustCtaY(val) {
   if (!frameDoc) return;
   frameDoc.querySelectorAll('.nav-cta').forEach(function(el){ el.style.position = 'relative'; el.style.top = val + 'px'; });
@@ -1370,6 +1380,7 @@ function randomColor(){
 </script>
 </body>
 </html>
+
 
 
 
