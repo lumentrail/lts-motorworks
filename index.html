@@ -326,6 +326,11 @@ section { padding: 88px 48px; }
 footer { background: #34353b; padding: 56px 48px 28px; border-top: 1px solid var(--border); }
 .footer-inner { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 56px; margin-bottom: 44px; }
 .footer-tagline { font-size: 14px; color: var(--gray-d); line-height: 1.7; margin-top: 14px; }
+.map-embed { margin-top: 24px; border-radius: 8px; overflow: hidden; border: 1px solid rgba(0,0,0,0.12); }
+.map-embed iframe { display: block; width: 100%; height: 220px; border: 0; }
+.map-embed a.map-link { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #f5f5f5; font-size: 13px; font-weight: 600; color: #1c1d22; text-decoration: none; border-top: 1px solid #e0e0e0; transition: background 0.2s; }
+.map-link:hover { background: #ebebeb; }
+.map-link svg { width: 15px; height: 15px; fill: #cc1111; flex-shrink: 0; }
 .footer-social { display: flex; align-items: center; gap: 14px; margin-top: 22px; }
 .footer-social-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: var(--gold); white-space: nowrap; }
 .footer-social-icons { display: flex; gap: 10px; }
@@ -478,7 +483,7 @@ footer { background: #34353b; padding: 56px 48px 28px; border-top: 1px solid var
 <body>
 
 <div class="topbar">
-  <span>1725 Wood St, Round Lake Beach, IL 60073 &nbsp;·&nbsp; <a href="tel:+18478775467">(847) 877-5467</a></span>
+  <span><a href="https://maps.google.com/?q=1725+Wood+St,+Round+Lake+Beach,+IL+60073" target="_blank" rel="noopener" style="color:inherit;text-decoration:none;">1725 Wood St, Round Lake Beach, IL 60073</a> &nbsp;·&nbsp; <a href="tel:+18478775467">(847) 877-5467</a></span>
   <strong>Mon–Fri 8AM–6PM &nbsp;·&nbsp; Sat 8AM–2PM</strong>
 </div>
 
@@ -679,10 +684,20 @@ footer { background: #34353b; padding: 56px 48px 28px; border-top: 1px solid var
       <div>
         <div class="eyebrow">Get In Touch</div>
         <h2 class="section-title">Visit <span>Us</span></h2>
-        <div class="info-row"><div class="info-icon"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 3C9.6 3 6 6.6 6 11c0 6.5 8 16 8 16s8-9.5 8-16c0-4.4-3.6-8-8-8z" stroke="#1c1d22" stroke-width="1.8"/><circle cx="14" cy="11" r="3" stroke="#cc1111" stroke-width="1.8"/></svg></div><div><div class="info-label">Address</div><div class="info-value">1725 Wood St, Round Lake Beach, IL 60073</div></div></div>
+        <div class="info-row"><div class="info-icon"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M14 3C9.6 3 6 6.6 6 11c0 6.5 8 16 8 16s8-9.5 8-16c0-4.4-3.6-8-8-8z" stroke="#1c1d22" stroke-width="1.8"/><circle cx="14" cy="11" r="3" stroke="#cc1111" stroke-width="1.8"/></svg></div><div><div class="info-label">Address</div><div class="info-value"><a href="https://maps.google.com/?q=1725+Wood+St,+Round+Lake+Beach,+IL+60073" target="_blank" rel="noopener" style="color:inherit;text-decoration:underline;text-underline-offset:3px;">1725 Wood St, Round Lake Beach, IL 60073</a></div></div></div>
         <div class="info-row"><div class="info-icon"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 5h5l2.5 5-3 2a14 14 0 006.5 6.5l2-3 5 2.5v5a2 2 0 01-2 2C9 25 3 19 3 7a2 2 0 012-2z" stroke="#1c1d22" stroke-width="1.8" stroke-linejoin="round"/><path d="M18 5a8 8 0 015 5M18 9a3 3 0 012 2" stroke="#cc1111" stroke-width="1.5" stroke-linecap="round"/></svg></div><div><div class="info-label">Phone</div><div class="info-value"><a href="tel:+18478775467">(847) 877-5467</a></div></div></div>
         <div class="info-row"><div class="info-icon"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="7" width="20" height="15" rx="2" stroke="#1c1d22" stroke-width="1.8"/><path d="M4 11l10 7 10-7" stroke="#cc1111" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="info-label">Email</div><div class="info-value"><a href="mailto:ltsmotorworks@gmail.com">ltsmotorworks@gmail.com</a></div></div></div>
         <div class="info-row"><div class="info-icon"><svg viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="14" cy="14" r="10" stroke="#1c1d22" stroke-width="1.8"/><path d="M14 8v7l4.5 3" stroke="#cc1111" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></div><div><div class="info-label">Hours</div><div class="info-value"><table class="hours-table"><tr><td>Mon – Fri</td><td>8:00 AM – 6:00 PM</td></tr><tr><td>Saturday</td><td>8:00 AM – 2:00 PM</td></tr><tr><td>Sunday</td><td>Closed</td></tr></table></div></div></div>
+      <div class="map-embed">
+        <iframe
+          src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2952.1!2d-88.0756!3d42.3761!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x880f9b1234567890%3A0x0!2s1725+Wood+St%2C+Round+Lake+Beach%2C+IL+60073!5e0!3m2!1sen!2sus!4v1000000000000!5m2!1sen!2sus"
+          allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
+          title="LTS Motorworks location map"></iframe>
+        <a href="https://maps.google.com/?q=1725+Wood+St,+Round+Lake+Beach,+IL+60073" target="_blank" rel="noopener" class="map-link">
+          <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/></svg>
+          Get Directions in Google Maps
+        </a>
+      </div>
       </div>
       <div>
         <div class="eyebrow">Request Service</div>
