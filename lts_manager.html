@@ -582,7 +582,7 @@ var myColor = isGuest ? randomColor() : '#cc1111';
 
 // Detect environment — Netlify serves the site as index.html, locally it's the full filename
 var isLocal = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
-var SITE_SRC = isLocal ? 'lts_motorworks_website.html' : 'index.html';
+var SITE_SRC = 'index.html';
 document.getElementById('site-frame').src = SITE_SRC;
 
 // ─── State ─────────────────────────────────────────────────────────────────
@@ -1370,6 +1370,8 @@ function randomColor(){
 </script>
 </body>
 </html>
+
+
 
 
 
