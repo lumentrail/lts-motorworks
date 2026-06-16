@@ -497,7 +497,7 @@ html, body { height: 100%; overflow: hidden; font-family: 'Poppins', sans-serif;
       <!-- Host-only export controls -->
       <div id="export-controls">
         <div class="sec" id="publish-section">
-          <div class="sec-label">🚀 Publish to Netlify</div>
+          <div class="sec-label">🚀 Publish to GitHub</div>
           <p class="export-info">Pushes the current site (including any live edits) directly to <strong style="color:#fff">lts-motorworks.netlify.app</strong>.</p>
           <button class="btn gold" onclick="publishToNetlify()" id="publish-btn">🚀 Publish Now</button>
           <div id="publish-progress"></div>
@@ -1195,7 +1195,8 @@ function addPhotoToGallery() {
 }
 
 // ─── Netlify token ────────────────────────────────────────────────────────────
-var NETLIFY_TOKEN = 'nfp_ByDBcpzCND5BQrVVkyrfXRKisHKDymBV1939';
+var GH_OWNER = 'lumentrail';
+var GH_REPO  = 'lts-motorworks';
 
 // ─── Email config ─────────────────────────────────────────────────────────────
 function saveEC() {
@@ -1215,12 +1216,25 @@ function saveEC() {
   });
 })();
 
-// ─── Publish to Netlify ───────────────────────────────────────────────────────
+// ─── GitHub token helpers ─────────────────────────────────────────────────────
+function showTokenPrompt() {
+  var row = document.getElementById('token-row');
+  if (row) { row.style.display = row.style.display==='none' ? 'block' : 'none'; }
+}
+function saveToken() {
+  var val = (document.getElementById('gh-token-input').value||'').trim();
+  if (!val) { alert('Please paste a token first.'); return; }
+  localStorage.setItem('lts_gh_token', val);
+  document.getElementById('token-row').style.display = 'none';
+  document.getElementById('gh-token-input').value = '';
+  alert('Token saved. Ready to publish.');
+}
+// ─── Publish to GitHub Pages ──────────────────────────────────────────────────
 async function publishToNetlify() {
-  var token = NETLIFY_TOKEN;
-  if (!token) { alert('Netlify token not configured.'); return; }
-
-  var siteId = 'b37d2fd8-28bd-45cc-bb2f-9cdbadc89c38';
+  var token = localStorage.getItem('lts_gh_token') || '';
+  if (!token) { showTokenPrompt(); return; }
+  var owner = GH_OWNER;
+  var repo  = GH_REPO;
   var btn = document.getElementById('publish-btn');
   var log = document.getElementById('publish-progress');
 
@@ -1230,25 +1244,49 @@ async function publishToNetlify() {
 
   function logLine(msg) { log.textContent += msg + '\n'; log.scrollTop = log.scrollHeight; }
 
-  try {
-    logLine('⏳ Building site file…');
+  async function ghPut(filePath, base64Content) {
+    // Get existing SHA if file exists
+    var sha = null;
+    try {
+      var r = await fetch('https://api.github.com/repos/'+owner+'/'+repo+'/contents/'+filePath,
+        {headers:{Authorization:'Bearer '+token,'User-Agent':'lts-manager'}});
+      if (r.ok) { var d = await r.json(); sha = d.sha; }
+    } catch(e) {}
+    var body = {message:'deploy: '+filePath, content:base64Content};
+    if (sha) body.sha = sha;
+    var res = await fetch('https://api.github.com/repos/'+owner+'/'+repo+'/contents/'+filePath, {
+      method:'PUT',
+      headers:{Authorization:'Bearer '+token,'User-Agent':'lts-manager','Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    if (!res.ok) { var e=await res.json(); throw new Error(e.message||'HTTP '+res.status); }
+  }
 
-    // Get live site HTML (includes any edits made in this session)
+  function toBase64(str) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+  async function blobToBase64(blob) {
+    return new Promise(function(resolve) {
+      var r = new FileReader();
+      r.onload = function() { resolve(r.result.split(',')[1]); };
+      r.readAsDataURL(blob);
+    });
+  }
+
+  try {
+    logLine('⏳ Reading site file…');
     var siteHtml = frameDoc
       ? '<!DOCTYPE html>\n' + frameDoc.documentElement.outerHTML
       : await fetch(SITE_SRC).then(function(r){ return r.text(); });
-
     var managerHtml = await fetch('lts_manager.html').then(function(r){ return r.text(); });
-    var logoBlob    = await fetch('lts_logo.png').then(function(r){ return r.blob(); });
 
-    logLine('📦 Creating zip…');
-    var zip = new JSZip();
-    zip.file('index.html',                  siteHtml);
-    zip.file('lts_motorworks_website.html', siteHtml);
-    zip.file('lts_manager.html',            managerHtml);
-    zip.file('lts_logo.png',               logoBlob);
+    logLine('📤 Pushing index.html…');
+    await ghPut('index.html', toBase64(siteHtml));
 
-    logLine('📷 Bundling photos…');
+    logLine('📤 Pushing lts_manager.html…');
+    await ghPut('lts_manager.html', toBase64(managerHtml));
+
+    logLine('📷 Pushing photos…');
     var photoFiles = [
       'photos/lts-mustang-hero.webp','photos/shop-exterior.webp','photos/camaro-zl1.webp',
       'photos/maserati-brakes.webp','photos/maserati-engine.webp','photos/mercedes-gl.webp',
@@ -1257,44 +1295,23 @@ async function publishToNetlify() {
       'photos/gmc-truck-repair.webp','photos/thermostat-diagnostic.webp','photos/classic-buick.webp',
       'photos/engine-removed.webp','photos/bmw-m-engine.webp'
     ];
-    await Promise.all(photoFiles.map(async function(p) {
+    for (var pi=0; pi<photoFiles.length; pi++) {
+      var p = photoFiles[pi];
       try {
         var blob = await fetch(p).then(function(r){ return r.blob(); });
-        zip.file(p, blob);
+        var b64  = await blobToBase64(blob);
+        await ghPut(p, b64);
+        logLine('  ✓ ' + p.split('/')[1]);
       } catch(e) { logLine('  ⚠ skipped ' + p); }
-    }));
-
-    var zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-    logLine('📤 Uploading to Netlify (' + (zipBlob.size / 1024).toFixed(0) + ' KB)…');
-
-    var res = await fetch('https://api.netlify.com/api/v1/sites/' + siteId + '/deploys', {
-      method: 'POST',
-      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/zip' },
-      body: zipBlob
-    });
-
-    if (!res.ok) {
-      var err = await res.json().catch(function(){ return {}; });
-      throw new Error(err.message || ('HTTP ' + res.status));
     }
 
-    var deploy = await res.json();
-    logLine('🔄 Processing deploy ' + deploy.id + '…');
+    logLine('✅ Published! → https://lumentrail.github.io/lts-motorworks/');
+    setStatus('Published to GitHub Pages ✅', true);
+    btn.disabled = false;
+    return;
 
-    // Poll for ready
-    for (var i = 0; i < 20; i++) {
-      await new Promise(function(r){ setTimeout(r, 3000); });
-      var check = await fetch('https://api.netlify.com/api/v1/deploys/' + deploy.id, {
-        headers: { Authorization: 'Bearer ' + token }
-      }).then(function(r){ return r.json(); });
-      logLine('   state: ' + check.state);
-      if (check.state === 'ready') {
-        logLine('✅ Published! → ' + check.ssl_url);
-        setStatus('Published to Netlify ✅', true);
-        btn.disabled = false;
-        return;
-      }
-      if (check.state === 'error') throw new Error('Netlify reported an error during deploy.');
+    // (legacy placeholder kept for structure)
+    if (false) {
     }
     throw new Error('Timed out waiting for deploy to go live.');
 
@@ -1353,6 +1370,8 @@ function randomColor(){
 </script>
 </body>
 </html>
+
+
 
 
 
