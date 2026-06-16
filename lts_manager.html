@@ -1,0 +1,1358 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LTS Motorworks — Site Manager</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; font-family: 'Poppins', sans-serif; }
+
+/* ── Layout ──────────────────────────────── */
+#app { display: flex; height: 100vh; background: #0e0f12; }
+
+#sidebar {
+  width: 340px; min-width: 340px;
+  background: #1c1d22;
+  border-right: 1px solid #2a2b30;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+}
+
+#preview-wrap { flex: 1; position: relative; overflow: hidden; }
+#site-frame { width: 100%; height: 100%; border: none; transition: width 0.3s; }
+
+/* ── Sidebar header ──────────────────────── */
+#mgr-header {
+  background: #13141a;
+  padding: 12px 16px;
+  border-bottom: 1px solid #2a2b30;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+#mgr-logo {
+  font-family: 'Poppins', sans-serif;
+  font-size: 18px; font-weight: 900; color: #cc1111;
+  letter-spacing: 0.05em; text-transform: uppercase;
+}
+#mgr-logo span { color: #e8b800; }
+#mgr-title { font-size: 11px; color: #555; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 600; }
+#back-link { font-size: 11px; color: #555; text-decoration: none; font-weight: 600; letter-spacing: 0.08em; white-space: nowrap; }
+#back-link:hover { color: #e8b800; }
+
+/* ── Collab bar in header ────────────────── */
+#collab-bar {
+  display: flex; align-items: center; gap: 8px;
+}
+#peers-display { display: flex; gap: 4px; align-items: center; }
+.peer-dot {
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; color: #fff;
+  border: 2px solid #1c1d22; cursor: default;
+}
+#share-btn {
+  background: #2a2b30; border: 1px solid #3a3b42; color: #aaa;
+  padding: 5px 10px; border-radius: 4px; font-size: 11px;
+  font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+#share-btn:hover { border-color: #e8b800; color: #e8b800; }
+#share-btn.guest-mode { background: #1a3a1a; border-color: #2a7a2a; color: #5fca5f; cursor: default; }
+
+/* ── Share modal ─────────────────────────── */
+#share-modal {
+  display: none; position: fixed; inset: 0; z-index: 9000;
+  background: rgba(0,0,0,0.7); align-items: center; justify-content: center;
+}
+#share-modal.open { display: flex; }
+#share-box {
+  background: #1c1d22; border: 1px solid #3a3b42; border-radius: 8px;
+  padding: 24px; width: 420px; max-width: 90vw;
+}
+#share-box h3 { color: #fff; font-size: 16px; margin-bottom: 6px; }
+#share-box p { color: #888; font-size: 13px; margin-bottom: 16px; line-height: 1.5; }
+#share-url {
+  width: 100%; background: #13141a; color: #e8b800; border: 1px solid #3a3b42;
+  border-radius: 4px; padding: 10px 12px; font-size: 12px; font-family: monospace;
+  margin-bottom: 12px;
+}
+.modal-row { display: flex; gap: 8px; }
+.modal-btn {
+  flex: 1; padding: 9px; border: none; border-radius: 4px; font-size: 13px;
+  font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.06em;
+}
+.modal-btn.primary { background: #cc1111; color: #fff; }
+.modal-btn.primary:hover { background: #e62222; }
+.modal-btn.secondary { background: #2a2b30; color: #aaa; }
+.modal-btn.secondary:hover { background: #3a3b42; color: #fff; }
+
+/* ── Draft autosave indicator ────────────── */
+#draft-badge {
+  font-size: 10px; padding: 2px 7px; border-radius: 10px;
+  background: #1a2a1a; color: #5a9a5a; border: 1px solid #2a4a2a;
+  font-weight: 600; letter-spacing: 0.05em; display: none;
+}
+#draft-badge.visible { display: inline-block; }
+
+/* ── Main tabs ───────────────────────────── */
+#main-tabs { display: flex; border-bottom: 1px solid #2a2b30; flex-shrink: 0; }
+.main-tab {
+  flex: 1; padding: 12px 4px; background: none; border: none;
+  border-bottom: 2px solid transparent; color: #666;
+  font-size: 11px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; cursor: pointer; transition: all 0.2s;
+}
+.main-tab:hover { color: #ccc; }
+.main-tab.active { color: #e8b800; border-bottom-color: #e8b800; }
+
+/* ── Tab panels ──────────────────────────── */
+.tab-panel { display: none; flex: 1; overflow-y: auto; }
+.tab-panel.active { display: block; }
+
+/* ── Shared section styles ───────────────── */
+.sec { padding: 14px 16px; border-bottom: 1px solid #2a2b30; }
+.sec-label { color: #e8b800; font-size: 10px; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 10px; }
+.row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.row:last-child { margin-bottom: 0; }
+.row label { color: #bbb; font-size: 12px; width: 110px; flex-shrink: 0; }
+.row input[type=range] { flex: 1; accent-color: #cc1111; }
+.row .val { color: #fff; font-size: 12px; font-family: monospace; width: 40px; text-align: right; flex-shrink: 0; }
+.row select { flex: 1; background: #2a2b30; color: #fff; border: 1px solid #3a3b42; border-radius: 4px; padding: 5px 8px; font-size: 12px; }
+.color-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.color-row:last-child { margin-bottom: 0; }
+.color-row label { color: #bbb; font-size: 12px; width: 110px; flex-shrink: 0; }
+.color-input { display: flex; align-items: center; gap: 6px; flex: 1; }
+.color-input input[type=color] { width: 34px; height: 28px; border: 1px solid #3a3b42; border-radius: 4px; background: none; cursor: pointer; padding: 1px; }
+.color-input input[type=text] { flex: 1; background: #2a2b30; color: #fff; border: 1px solid #3a3b42; border-radius: 4px; padding: 5px 8px; font-size: 12px; font-family: monospace; }
+.global-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.global-item { display: flex; flex-direction: column; gap: 4px; }
+.global-item label { color: #bbb; font-size: 11px; }
+.global-item input[type=color] { width: 100%; height: 32px; border: 1px solid #3a3b42; border-radius: 4px; cursor: pointer; background: none; padding: 2px; }
+.btn { width: 100%; padding: 10px; background: #cc1111; color: #fff; border: none; border-radius: 4px; font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; margin-top: 4px; }
+.btn:hover { background: #e62222; }
+.btn.sec-btn { background: #2a2b30; color: #aaa; margin-top: 6px; }
+.btn.sec-btn:hover { background: #3a3b42; color: #fff; }
+.btn.gold { background: #e8b800; color: #111; }
+.btn.gold:hover { background: #ffd000; }
+.btn:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
+
+/* ── Design tab ──────────────────────────── */
+#hint-bar { padding: 10px 14px; background: #e8b800; color: #1a1a1a; font-size: 12px; font-weight: 600; text-align: center; flex-shrink: 0; }
+#hint-bar.active { background: #cc1111; color: #fff; }
+#sel-info { padding: 10px 16px; background: #13141a; border-bottom: 1px solid #2a2b30; font-size: 12px; color: #aaa; display: none; }
+#sel-info.show { display: block; }
+#sel-tag { color: #e8b800; font-weight: 700; font-size: 13px; }
+#sel-text { color: #ccc; font-size: 11px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+#design-subtabs { display: flex; border-bottom: 1px solid #2a2b30; flex-shrink: 0; }
+.dsub { flex: 1; padding: 9px 4px; background: none; border: none; border-bottom: 2px solid transparent; color: #666; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; cursor: pointer; }
+.dsub:hover { color: #ccc; }
+.dsub.active { color: #e8b800; border-bottom-color: #e8b800; }
+
+/* ── Content tab ─────────────────────────── */
+.content-field { margin-bottom: 10px; }
+.content-field label { display: block; color: #bbb; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
+.content-field input, .content-field textarea { width: 100%; background: #2a2b30; color: #fff; border: 1px solid #3a3b42; border-radius: 4px; padding: 8px 10px; font-size: 13px; font-family: 'Poppins', sans-serif; }
+.content-field input:focus, .content-field textarea:focus { outline: none; border-color: #cc1111; }
+.content-field textarea { resize: vertical; min-height: 60px; }
+
+/* ── Photos tab ──────────────────────────── */
+.gal-card { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #2a2b30; }
+.gal-card:last-child { border-bottom: none; }
+.gal-thumb { width: 60px; height: 42px; object-fit: cover; border-radius: 3px; border: 1px solid #3a3b42; flex-shrink: 0; }
+.gal-info { flex: 1; min-width: 0; }
+.gal-name { color: #ccc; font-size: 11px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gal-cap  { color: #555; font-size: 10px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gal-rm { background: #2a1010; border: 1px solid #5a2020; color: #cc4444; width: 28px; height: 28px; border-radius: 4px; cursor: pointer; font-size: 13px; flex-shrink: 0; }
+.gal-rm:hover { background: #4a1010; border-color: #cc1111; color: #ff4444; }
+
+/* ── Export tab ──────────────────────────── */
+#export-code { width: 100%; background: #13141a; color: #e8b800; border: 1px solid #2a2b30; border-radius: 4px; padding: 12px; font-size: 11px; font-family: monospace; resize: none; min-height: 140px; line-height: 1.6; }
+.export-info { color: #666; font-size: 12px; line-height: 1.6; margin-bottom: 12px; }
+#guest-lock { background: #1a1a2a; border: 1px solid #3a3b50; border-radius: 6px; padding: 14px; text-align: center; display: none; }
+#guest-lock p { color: #888; font-size: 13px; line-height: 1.6; }
+#guest-lock strong { color: #e8b800; }
+
+/* ── Publish section ─────────────────────── */
+#publish-section { border-top: 2px solid #cc1111; }
+#publish-progress {
+  display: none; margin-top: 10px;
+  background: #13141a; border: 1px solid #2a2b30; border-radius: 4px;
+  padding: 10px 12px; font-size: 12px; font-family: monospace; color: #aaa; line-height: 1.8;
+}
+#publish-progress.visible { display: block; }
+#netlify-token-wrap { margin-bottom: 10px; }
+#netlify-token-wrap label { display: block; color: #bbb; font-size: 11px; margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
+#netlify-token-wrap input {
+  width: 100%; background: #13141a; color: #fff; border: 1px solid #3a3b42;
+  border-radius: 4px; padding: 8px 10px; font-size: 12px; font-family: monospace;
+}
+#netlify-token-wrap input:focus { outline: none; border-color: #cc1111; }
+#token-saved-note { font-size: 11px; color: #5a9a5a; margin-top: 4px; display: none; }
+
+/* ── History items ───────────────────────── */
+.hist-item { background: #2a2b30; border: 1px solid #3a3b42; border-radius: 4px; padding: 8px 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+.hist-item:hover { border-color: #cc1111; }
+.hist-item span { font-size: 12px; color: #ccc; }
+.hist-restore { font-size: 11px; color: #888; }
+
+/* ── Status bar ──────────────────────────── */
+#status-bar { background: #13141a; border-top: 1px solid #2a2b30; padding: 7px 14px; font-size: 11px; color: #555; display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+#status-dot { width: 6px; height: 6px; border-radius: 50%; background: #2a7a2a; flex-shrink: 0; }
+
+/* ── Preview toolbar ─────────────────────── */
+#preview-toolbar { background: #13141a; padding: 6px 12px; border-bottom: 1px solid #2a2b30; display: flex; gap: 6px; align-items: center; }
+.vp-btn { background: #2a2b30; border: 1px solid #3a3b42; color: #aaa; padding: 4px 10px; border-radius: 4px; font-size: 11px; font-weight: 600; cursor: pointer; text-transform: uppercase; letter-spacing: 0.08em; }
+.vp-btn:hover, .vp-btn.active { background: #cc1111; border-color: #cc1111; color: #fff; }
+.vp-btn.wb-active { background: #e8b800; border-color: #e8b800; color: #111; }
+#vp-label { color: #555; font-size: 11px; }
+
+/* ── Preview container ───────────────────── */
+#preview-inner { position: relative; height: calc(100% - 37px); overflow: auto; background: #222; display: flex; justify-content: center; }
+
+/* ── Whiteboard canvas ───────────────────── */
+#wb-canvas {
+  display: none;
+  position: absolute; top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 20; touch-action: none;
+}
+#wb-canvas.active { display: block; }
+
+/* ── Whiteboard toolbar ──────────────────── */
+#wb-toolbar {
+  display: none;
+  position: absolute; top: 10px; left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  background: #13141a; border: 1px solid #3a3b42; border-radius: 40px;
+  padding: 6px 12px; gap: 8px; align-items: center;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+#wb-toolbar.active { display: flex; }
+.wb-tool {
+  width: 32px; height: 32px; border-radius: 50%; border: 2px solid transparent;
+  background: #2a2b30; color: #aaa; font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+}
+.wb-tool:hover { background: #3a3b42; color: #fff; }
+.wb-tool.active { border-color: #e8b800; background: #2a2b10; color: #e8b800; }
+.wb-tool.erase.active { border-color: #cc1111; background: #2a1010; color: #cc1111; }
+#wb-sep { width: 1px; height: 22px; background: #2a2b30; }
+#wb-color { width: 28px; height: 28px; border: 2px solid #3a3b42; border-radius: 50%; cursor: pointer; padding: 0; background: none; }
+#wb-size { width: 60px; accent-color: #e8b800; }
+#wb-clear { background: none; border: 1px solid #3a3b42; color: #888; padding: 4px 10px; border-radius: 20px; font-size: 11px; cursor: pointer; }
+#wb-clear:hover { border-color: #cc1111; color: #cc1111; }
+
+/* ── Text input on canvas ────────────────── */
+#wb-text-input {
+  display: none;
+  position: absolute; z-index: 40;
+  background: rgba(20,21,26,0.9); border: 1px solid #e8b800;
+  color: #fff; padding: 6px 10px; font-size: 14px; font-family: 'Poppins', sans-serif;
+  border-radius: 4px; min-width: 140px; outline: none;
+}
+
+/* ── Peer cursors ────────────────────────── */
+.peer-cursor {
+  position: absolute; pointer-events: none; z-index: 25;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 2px;
+}
+.peer-cursor-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid #fff; }
+.peer-cursor-label { font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 8px; color: #fff; white-space: nowrap; }
+/* ── Password gate ───────────────────────── */
+#pw-gate {
+  position: fixed; inset: 0; z-index: 99999;
+  background: #0e0f12; display: flex; align-items: center; justify-content: center;
+}
+#pw-box {
+  background: #1c1d22; border: 1px solid #2a2b30; border-radius: 10px;
+  padding: 40px 36px; width: 360px; max-width: 90vw; text-align: center;
+}
+#pw-logo {
+  font-family: 'Poppins', sans-serif; font-size: 26px; font-weight: 900;
+  color: #cc1111; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px;
+}
+#pw-logo span { color: #e8b800; }
+#pw-sub { font-size: 12px; color: #555; text-transform: uppercase; letter-spacing: 0.15em; margin-bottom: 28px; }
+#pw-input {
+  width: 100%; background: #13141a; border: 1px solid #3a3b42; border-radius: 4px;
+  color: #fff; padding: 12px 14px; font-size: 15px; font-family: 'Poppins', sans-serif;
+  outline: none; margin-bottom: 10px; text-align: center; letter-spacing: 0.1em;
+}
+#pw-input:focus { border-color: #cc1111; }
+#pw-btn {
+  width: 100%; background: #cc1111; color: #fff; border: none; border-radius: 4px;
+  padding: 12px; font-size: 14px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.1em; cursor: pointer; font-family: 'Poppins', sans-serif;
+}
+#pw-btn:hover { background: #e62222; }
+#pw-err { color: #e62222; font-size: 13px; margin-top: 10px; min-height: 18px; }
+</style>
+</head>
+<body>
+<!-- Password gate -->
+<div id="pw-gate">
+  <div id="pw-box">
+    <div id="pw-logo">LTS <span>M</span></div>
+    <div id="pw-sub">Site Manager</div>
+    <input type="password" id="pw-input" placeholder="Enter password" autocomplete="current-password">
+    <button id="pw-btn" onclick="checkPw()">Unlock</button>
+    <div id="pw-err"></div>
+  </div>
+</div>
+<script>
+(function(){
+  var PW = 'lts2024admin';
+  if(sessionStorage.getItem('lts_mgr_auth')==='1'){
+    document.getElementById('pw-gate').style.display='none';
+  }
+  document.getElementById('pw-input').addEventListener('keydown',function(e){if(e.key==='Enter')checkPw();});
+  window.checkPw=function(){
+    var v=document.getElementById('pw-input').value;
+    if(v===PW){sessionStorage.setItem('lts_mgr_auth','1');document.getElementById('pw-gate').style.display='none';}
+    else{document.getElementById('pw-err').textContent='Incorrect password.';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
+  };
+})();
+</script>
+<div id="app">
+
+  <!-- ══ Sidebar ════════════════════════════════════════════════════ -->
+  <div id="sidebar">
+
+    <div id="mgr-header">
+      <div>
+        <div id="mgr-logo">LTS<span>◆</span>Mgr</div>
+        <div id="mgr-title">Site Manager</div>
+      </div>
+      <a id="back-link" href="lts_motorworks_website.html" target="_blank">&#8592; View Site</a>
+      <div id="collab-bar">
+        <span id="draft-badge">● DRAFT SAVED</span>
+        <div id="peers-display"></div>
+        <button id="share-btn" onclick="openShareModal()">⚡ Share</button>
+      </div>
+    </div>
+
+    <!-- Main nav tabs -->
+    <div id="main-tabs">
+      <button class="main-tab active" onclick="switchTab('design', this)">Design</button>
+      <button class="main-tab" onclick="switchTab('content', this)">Content</button>
+      <button class="main-tab" onclick="switchTab('photos', this)">Photos</button>
+      <button class="main-tab" onclick="switchTab('export', this)">Export</button>
+    </div>
+
+    <!-- ══ DESIGN TAB ══════════════════════════════════════════════ -->
+    <div id="tab-design" class="tab-panel active" style="display:flex; flex-direction:column; overflow:hidden;">
+      <div id="hint-bar">Click an element on the page to edit it</div>
+      <div id="sel-info">
+        <div id="sel-tag"></div>
+        <div id="sel-text"></div>
+      </div>
+      <div id="design-subtabs">
+        <button class="dsub active" onclick="dsubTab('element', this)">Element</button>
+        <button class="dsub" onclick="dsubTab('global', this)">Global</button>
+        <button class="dsub" onclick="dsubTab('history', this)">History</button>
+      </div>
+
+      <!-- Element sub-tab -->
+      <div id="dsub-element" style="overflow-y:auto; flex:1;">
+        <div class="sec" id="text-edit-sec" style="display:none;">
+          <div class="sec-label">Text Content</div>
+          <textarea id="text-edit-area" style="width:100%;background:#2a2b30;color:#fff;border:1px solid #3a3b42;border-radius:4px;padding:8px 10px;font-size:13px;font-family:'Barlow',sans-serif;resize:vertical;min-height:64px;line-height:1.5;" placeholder="Edit text…" oninput="applyTextEdit(this.value)"></textarea>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Typography</div>
+          <div class="row"><label>Font Size</label><input type="range" id="dp-fontsize" min="8" max="120" value="16" oninput="dpApply('fontSize', this.value+'px'); document.getElementById('dp-fontsize-val').textContent=this.value+'px'"><span class="val" id="dp-fontsize-val">16px</span></div>
+          <div class="row"><label>Font Weight</label><select id="dp-fontweight" onchange="dpApply('fontWeight', this.value)"><option value="300">Light (300)</option><option value="400" selected>Regular (400)</option><option value="500">Medium (500)</option><option value="600">Semi Bold (600)</option><option value="700">Bold (700)</option><option value="900">Black (900)</option></select></div>
+          <div class="row"><label>Letter Spacing</label><input type="range" id="dp-spacing" min="-5" max="20" value="0" step="0.5" oninput="dpApply('letterSpacing', this.value+'px'); document.getElementById('dp-spacing-val').textContent=this.value+'px'"><span class="val" id="dp-spacing-val">0px</span></div>
+          <div class="row"><label>Line Height</label><input type="range" id="dp-lineheight" min="0.8" max="3" value="1.6" step="0.05" oninput="dpApply('lineHeight', this.value); document.getElementById('dp-lineheight-val').textContent=this.value"><span class="val" id="dp-lineheight-val">1.6</span></div>
+          <div class="row"><label>Transform</label><select id="dp-transform" onchange="dpApply('textTransform', this.value)"><option value="none">None</option><option value="uppercase">UPPERCASE</option><option value="lowercase">lowercase</option><option value="capitalize">Capitalize</option></select></div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Color</div>
+          <div class="color-row"><label>Text Color</label><div class="color-input"><input type="color" id="dp-color" value="#ffffff" oninput="dpApply('color', this.value); document.getElementById('dp-color-hex').value=this.value"><input type="text" id="dp-color-hex" value="#ffffff" maxlength="7" onchange="dpApply('color', this.value); document.getElementById('dp-color').value=this.value"></div></div>
+          <div class="color-row"><label>Background</label><div class="color-input"><input type="color" id="dp-bgcolor" value="#2a2b30" oninput="dpApply('backgroundColor', this.value); document.getElementById('dp-bgcolor-hex').value=this.value"><input type="text" id="dp-bgcolor-hex" value="#2a2b30" maxlength="7" onchange="dpApply('backgroundColor', this.value); document.getElementById('dp-bgcolor').value=this.value"></div></div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Spacing</div>
+          <div class="row"><label>Padding Top</label><input type="range" id="dp-pt" min="0" max="120" value="0" oninput="dpApply('paddingTop', this.value+'px'); document.getElementById('dp-pt-val').textContent=this.value+'px'"><span class="val" id="dp-pt-val">0px</span></div>
+          <div class="row"><label>Padding Bottom</label><input type="range" id="dp-pb" min="0" max="120" value="0" oninput="dpApply('paddingBottom', this.value+'px'); document.getElementById('dp-pb-val').textContent=this.value+'px'"><span class="val" id="dp-pb-val">0px</span></div>
+          <div class="row"><label>Margin Bottom</label><input type="range" id="dp-mb" min="0" max="80" value="0" oninput="dpApply('marginBottom', this.value+'px'); document.getElementById('dp-mb-val').textContent=this.value+'px'"><span class="val" id="dp-mb-val">0px</span></div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Border</div>
+          <div class="row"><label>Border Width</label><input type="range" id="dp-bw" min="0" max="10" value="0" oninput="dpApply('borderWidth', this.value+'px'); dpApply('borderStyle','solid'); document.getElementById('dp-bw-val').textContent=this.value+'px'"><span class="val" id="dp-bw-val">0px</span></div>
+          <div class="color-row"><label>Border Color</label><div class="color-input"><input type="color" id="dp-bc" value="#cc1111" oninput="dpApply('borderColor', this.value)"></div></div>
+          <div class="row"><label>Border Radius</label><input type="range" id="dp-br" min="0" max="50" value="0" oninput="dpApply('borderRadius', this.value+'px'); document.getElementById('dp-br-val').textContent=this.value+'px'"><span class="val" id="dp-br-val">0px</span></div>
+        </div>
+        <div class="sec">
+          <button class="btn sec-btn" onclick="dpResetElement()">↺ Reset This Element</button>
+          <button class="btn" onclick="dpSaveSnapshot()">💾 Save Snapshot</button>
+        </div>
+      </div>
+
+      <!-- Global sub-tab -->
+      <div id="dsub-global" style="display:none; overflow-y:auto; flex:1;">
+        <div class="sec">
+          <div class="sec-label">Background Colors</div>
+          <div class="global-grid">
+            <div class="global-item"><label>Main BG</label><input type="color" id="g-main" value="#3f4046" oninput="dpGlobal('--black', this.value)"></div>
+            <div class="global-item"><label>Section BG</label><input type="color" id="g-section" value="#4a4b52" oninput="dpGlobal('--charcoal', this.value)"></div>
+            <div class="global-item"><label>Cards</label><input type="color" id="g-card" value="#54555d" oninput="dpGlobal('--card', this.value)"></div>
+            <div class="global-item"><label>Borders</label><input type="color" id="g-border" value="#63646d" oninput="dpGlobal('--border', this.value)"></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Accent Colors</div>
+          <div class="global-grid">
+            <div class="global-item"><label>Red / Primary</label><input type="color" id="g-red" value="#cc1111" oninput="dpGlobal('--red', this.value)"></div>
+            <div class="global-item"><label>Red Bright</label><input type="color" id="g-redbr" value="#e62222" oninput="dpGlobal('--red-br', this.value)"></div>
+            <div class="global-item"><label>Gold</label><input type="color" id="g-gold" value="#e8b800" oninput="dpGlobal('--gold', this.value)"></div>
+            <div class="global-item"><label>Text White</label><input type="color" id="g-white" value="#ffffff" oninput="dpGlobal('--white', this.value)"></div>
+          </div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Global Font Size</div>
+          <div class="row"><label>Base Size</label><input type="range" id="g-fontsize" min="12" max="22" value="16" oninput="dpGlobalFont(this.value); document.getElementById('g-fontsize-val').textContent=this.value+'px'"><span class="val" id="g-fontsize-val">16px</span></div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Top Bar &amp; Footer</div>
+          <div class="global-grid"><div class="global-item"><label>Top / Footer BG</label><input type="color" id="g-topbar" value="#34353b" oninput="dpGlobal('--topbar', this.value)"></div></div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Nav CTA Button</div>
+          <div class="row"><label>Vertical Offset</label><input type="range" id="g-cta-y" min="-20" max="20" value="0" oninput="adjustCtaY(this.value); document.getElementById('g-cta-y-val').textContent=this.value+'px'"><span class="val" id="g-cta-y-val">0px</span></div>
+        </div>
+        <div class="sec">
+          <button class="btn" onclick="dpSaveSnapshot()">💾 Save Snapshot</button>
+          <button class="btn sec-btn" onclick="dpResetAll()">↺ Reset Everything</button>
+        </div>
+      </div>
+
+      <!-- History sub-tab -->
+      <div id="dsub-history" style="display:none; overflow-y:auto; flex:1; padding: 14px 16px;">
+        <div class="sec-label" style="margin-bottom:10px;">Saved Snapshots</div>
+        <div id="hist-list"><div style="color:#555; font-size:12px; text-align:center; padding:20px;">No snapshots yet.<br>Make changes and hit Save Snapshot.</div></div>
+        <div style="margin-top:14px;">
+          <button class="btn sec-btn" onclick="loadDraftManual()">↺ Restore Last Autosave</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ CONTENT TAB ═════════════════════════════════════════════ -->
+    <div id="tab-content" class="tab-panel">
+      <div class="sec">
+        <div class="sec-label">Business Info</div>
+        <div class="content-field"><label>Business Name</label><input type="text" id="c-name" value="LTS Motorworks" oninput="setContent('h1.hero-title, .footer-logo', this.value)"></div>
+        <div class="content-field"><label>Phone Number</label><input type="text" id="c-phone" value="(847) 623-2234" oninput="setLinks('a[href^=tel]', this.value, 'tel')"></div>
+        <div class="content-field"><label>Address</label><input type="text" id="c-address" value="1725 Wood St, Round Lake Beach, IL 60073"></div>
+        <div class="content-field"><label>Hours (Mon–Fri)</label><input type="text" id="c-hours-wkd" value="Mon–Fri: 8AM–6PM"></div>
+        <div class="content-field"><label>Hours (Sat)</label><input type="text" id="c-hours-sat" value="Sat: 8AM–2PM"></div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Hero Text</div>
+        <div class="content-field"><label>Hero Headline</label><textarea id="c-hero-h" oninput="setSiteEl('.hero-title', this.value)">Round Lake Beach's Most Trusted Auto Repair</textarea></div>
+        <div class="content-field"><label>Hero Sub</label><textarea id="c-hero-sub" oninput="setSiteEl('.hero-sub', this.value)">ASE Certified • Diesel • German &amp; European Specialists</textarea></div>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Actions</div>
+        <button class="btn" onclick="reloadFrame()">↺ Reload Preview</button>
+      </div>
+      <div class="sec">
+        <div class="sec-label">📧 Form Notifications</div>
+        <p style="color:#666;font-size:12px;line-height:1.7;margin-bottom:10px;">Booking form uses <strong style="color:#ccc;">Netlify Forms</strong> — no API keys needed. To set the email address that receives booking notifications:</p>
+        <ol style="color:#888;font-size:12px;line-height:1.9;margin:0 0 0 16px;padding:0;">
+          <li>Go to your <a href="https://app.netlify.com" target="_blank" style="color:#e8b800;">Netlify dashboard</a></li>
+          <li>Site → Forms → booking</li>
+          <li>Settings → Form notifications → Add email notification</li>
+        </ol>
+      </div>
+    </div>
+
+    <!-- ══ PHOTOS TAB ══════════════════════════════════════════════ -->
+    <div id="tab-photos" class="tab-panel">
+      <div class="sec">
+        <div class="sec-label">Rotating Gallery <span id="slide-count" style="color:#555;font-weight:400;font-size:10px;"></span></div>
+        <p style="color:#666; font-size:12px; margin-bottom:12px;">Remove photos or drag to reorder. Click ↺ to refresh from preview.</p>
+        <div id="gallery-grid"></div>
+        <button class="btn sec-btn" style="margin-top:10px;" onclick="buildGalleryManager()">↺ Refresh List</button>
+      </div>
+      <div class="sec">
+        <div class="sec-label">Add Photo to Gallery</div>
+        <select id="add-photo-select" style="width:100%;background:#2a2b30;color:#fff;border:1px solid #3a3b42;border-radius:4px;padding:8px;font-size:12px;margin-bottom:8px;"></select>
+        <input type="text" id="add-photo-cap" placeholder="Caption (optional, e.g. BMW — engine service)" style="width:100%;background:#2a2b30;color:#fff;border:1px solid #3a3b42;border-radius:4px;padding:8px 10px;font-size:12px;margin-bottom:8px;">
+        <button class="btn gold" onclick="addPhotoToGallery()">+ Add to Gallery</button>
+      </div>
+    </div>
+
+    <!-- ══ EXPORT TAB ══════════════════════════════════════════════ -->
+    <div id="tab-export" class="tab-panel">
+      <!-- Guest lock shown instead of publish controls -->
+      <div id="guest-lock" class="sec">
+        <p>🔒 <strong>View only</strong><br><br>You can draw on the whiteboard and leave notes, but publishing is reserved for the site owner.<br><br>Ask <strong>Mike</strong> to publish when you're happy with the draft.</p>
+      </div>
+      <!-- Host-only export controls -->
+      <div id="export-controls">
+        <div class="sec" id="publish-section">
+          <div class="sec-label">🚀 Publish to Netlify</div>
+          <p class="export-info">Pushes the current site (including any live edits) directly to <strong style="color:#fff">lts-motorworks.netlify.app</strong>.</p>
+          <button class="btn gold" onclick="publishToNetlify()" id="publish-btn">🚀 Publish Now</button>
+          <div id="publish-progress"></div>
+        </div>
+        <div class="sec">
+          <div class="sec-label">Download / Export</div>
+          <p class="export-info">Captures all design changes and generates an updated site file.</p>
+          <button class="btn gold" onclick="generateExport()">⚡ Generate Export</button>
+          <button class="btn sec-btn" style="margin-top:8px;" onclick="copyExport()">📋 Copy to Clipboard</button>
+          <button class="btn" style="margin-top:6px;" onclick="downloadExport()">💾 Download lts_motorworks_website.html</button>
+        </div>
+        <div class="sec">
+          <div class="sec-label">CSS Variables Snapshot</div>
+          <textarea id="export-code" readonly placeholder="Click Generate Export above..."></textarea>
+        </div>
+        <div class="sec">
+          <div class="sec-label">CSS Override Block</div>
+          <textarea id="export-overrides" readonly style="width:100%; background:#13141a; color:#aaa; border:1px solid #2a2b30; border-radius:4px; padding:10px; font-size:11px; font-family:monospace; resize:none; min-height:100px;" placeholder="No element changes yet."></textarea>
+        </div>
+      </div>
+    </div>
+
+    <div id="status-bar">
+      <div id="status-dot"></div>
+      <span id="status-msg">Starting…</span>
+    </div>
+  </div>
+
+  <!-- ══ Preview pane ════════════════════════════════════════════════ -->
+  <div id="preview-wrap">
+    <div id="preview-toolbar">
+      <button class="vp-btn" onclick="setViewport(375, this)">📱 375</button>
+      <button class="vp-btn" onclick="setViewport(768, this)">💻 768</button>
+      <button class="vp-btn active" onclick="setViewport('100%', this)">🖥 Full</button>
+      <span id="vp-label" style="color:#555; font-size:11px;"></span>
+      <button class="vp-btn" id="wb-toggle-btn" onclick="toggleWhiteboard()" style="margin-left:auto;">🖊 Whiteboard</button>
+      <button class="vp-btn" onclick="reloadFrame()">↺ Reload</button>
+    </div>
+
+    <div id="preview-inner">
+      <iframe id="site-frame" src="" style="height:100%; min-height:600px; border:none; background:#fff;"></iframe>
+      <!-- Whiteboard canvas -->
+      <canvas id="wb-canvas"></canvas>
+      <!-- Whiteboard toolbar -->
+      <div id="wb-toolbar">
+        <button class="wb-tool active" id="wb-pen" onclick="setWbTool('pen')" title="Pen">✏️</button>
+        <button class="wb-tool" id="wb-txt" onclick="setWbTool('text')" title="Text">T</button>
+        <button class="wb-tool erase" id="wb-eraser" onclick="setWbTool('eraser')" title="Eraser">⬜</button>
+        <div id="wb-sep"></div>
+        <input type="color" id="wb-color" value="#e8b800" title="Color">
+        <input type="range" id="wb-size" min="2" max="24" value="4" title="Size">
+        <button id="wb-clear" onclick="clearWhiteboard()">Clear</button>
+      </div>
+      <!-- Text input for wb text tool -->
+      <input type="text" id="wb-text-input" placeholder="Type note, Enter to place…">
+      <!-- Peer cursors container -->
+      <div id="peer-cursors"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Share modal -->
+<div id="share-modal">
+  <div id="share-box">
+    <h3>🔗 Share Session</h3>
+    <p>Send this link to collaborators. They can draw on the whiteboard and leave notes — but <strong>cannot publish</strong> changes.</p>
+    <input type="text" id="share-url" readonly onclick="this.select()">
+    <div class="modal-row">
+      <button class="modal-btn primary" onclick="copyShareUrl()">📋 Copy Link</button>
+      <button class="modal-btn secondary" onclick="closeShareModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ─── Role detection ────────────────────────────────────────────────────────
+var params = new URLSearchParams(location.search);
+var joinId  = params.get('join');
+var isGuest = !!joinId;
+var myName  = isGuest ? ('Guest' + Math.floor(Math.random()*900+100)) : 'Mike';
+var myColor = isGuest ? randomColor() : '#cc1111';
+
+// Detect environment — Netlify serves the site as index.html, locally it's the full filename
+var isLocal = (location.hostname === 'localhost' || location.hostname === '127.0.0.1');
+var SITE_SRC = isLocal ? 'lts_motorworks_website.html' : 'index.html';
+document.getElementById('site-frame').src = SITE_SRC;
+
+// ─── State ─────────────────────────────────────────────────────────────────
+var frame = document.getElementById('site-frame');
+var frameWin = null, frameDoc = null;
+var selectedEl = null;
+var originalStyles = new Map();
+var snapshots = [];
+var cssVarChanges = {};
+var peer = null, hostConn = null, guestConns = [];
+var wbStrokes = [];    // full history
+var wbActive = false;
+var wbTool = 'pen';
+var wbDrawing = false;
+var wbCurrentStroke = null;
+var wbTextPending = null;
+var autosaveTimer = null;
+
+// ─── Init ───────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', function() {
+  applyGuestMode();
+  initPeer();
+  checkDraftOnLoad();
+  startAutosave();
+  initWhiteboard();
+});
+
+// ─── Guest mode UI ─────────────────────────────────────────────────────────
+function applyGuestMode() {
+  if (!isGuest) return;
+  document.getElementById('guest-lock').style.display = 'block';
+  document.getElementById('export-controls').style.display = 'none';
+  document.getElementById('share-btn').textContent = '👤 ' + myName;
+  document.getElementById('share-btn').classList.add('guest-mode');
+  document.getElementById('share-btn').onclick = null;
+  // Design/content tabs still fully accessible for guests
+}
+
+// ─── Frame ready ────────────────────────────────────────────────────────────
+frame.addEventListener('load', function() {
+  try {
+    frameWin = frame.contentWindow;
+    frameDoc = frame.contentDocument;
+    injectPickingStyle();
+    buildGalleryManager();
+    resizeCanvas();
+    setStatus('Site loaded — click any element to edit it', true);
+  } catch(e) {
+    setStatus('⚠ Cannot access frame — serve files locally or from Netlify', false);
+  }
+});
+
+function injectPickingStyle() {
+  if (!frameDoc) return;
+  var s = frameDoc.createElement('style');
+  s.textContent = 'body.__picking * { cursor:crosshair!important } body.__picking *:hover { outline:2px dashed #e8b800!important; outline-offset:2px } .__selected { outline:2px solid #cc1111!important; outline-offset:2px }';
+  frameDoc.head.appendChild(s);
+  if (!isGuest) startPicking();
+}
+
+// ─── Element picking ────────────────────────────────────────────────────────
+function startPicking() {
+  if (!frameDoc || wbActive) return;
+  frameDoc.body.classList.add('__picking');
+  frameDoc.addEventListener('click', onPick, true);
+  setHint('Click any element to select it', false);
+}
+function stopPicking() {
+  if (!frameDoc) return;
+  frameDoc.body.classList.remove('__picking');
+  frameDoc.removeEventListener('click', onPick, true);
+}
+function onPick(e) {
+  e.preventDefault(); e.stopPropagation();
+  if (selectedEl) selectedEl.classList.remove('__selected');
+  selectedEl = e.target;
+  selectedEl.classList.add('__selected');
+  if (!originalStyles.has(selectedEl)) originalStyles.set(selectedEl, selectedEl.getAttribute('style') || '');
+  var tag = selectedEl.tagName.toLowerCase();
+  var cls = (selectedEl.className || '').replace('__selected','').trim().split(' ').slice(0,2).join('.');
+  document.getElementById('sel-tag').textContent = tag + (cls ? '.'+cls : '');
+  document.getElementById('sel-text').textContent = (selectedEl.textContent||'').trim().substring(0,60) || '(no text)';
+  document.getElementById('sel-info').classList.add('show');
+  var cs = frameWin.getComputedStyle(selectedEl);
+  var fs = parseInt(cs.fontSize);
+  document.getElementById('dp-fontsize').value = fs;
+  document.getElementById('dp-fontsize-val').textContent = fs+'px';
+  document.getElementById('dp-fontweight').value = cs.fontWeight;
+  var col = rgbToHex(cs.color);
+  document.getElementById('dp-color').value = col;
+  document.getElementById('dp-color-hex').value = col;
+  var bg = cs.backgroundColor;
+  if (bg && bg !== 'rgba(0, 0, 0, 0)' && bg !== 'transparent') {
+    var bgh = rgbToHex(bg);
+    document.getElementById('dp-bgcolor').value = bgh;
+    document.getElementById('dp-bgcolor-hex').value = bgh;
+  }
+  setHint('✓ Selected — adjust below', true);
+
+  // Show text editor if element has direct text
+  var textSec = document.getElementById('text-edit-sec');
+  var textArea = document.getElementById('text-edit-area');
+  var directText = Array.from(selectedEl.childNodes)
+    .filter(function(n){ return n.nodeType === 3; })
+    .map(function(n){ return n.textContent; })
+    .join('').trim();
+  if (directText || selectedEl.children.length === 0) {
+    textSec.style.display = 'block';
+    textArea.value = selectedEl.textContent.trim();
+  } else {
+    textSec.style.display = 'none';
+  }
+}
+
+function applyTextEdit(val) {
+  if (!selectedEl) return;
+  // Preserve child elements (like <span> tags), only update text nodes
+  var hasChildEls = Array.from(selectedEl.children).length > 0;
+  if (hasChildEls) {
+    // Replace only text nodes, keep child elements intact
+    Array.from(selectedEl.childNodes).forEach(function(n){
+      if (n.nodeType === 3) n.textContent = val;
+    });
+  } else {
+    selectedEl.textContent = val;
+  }
+}
+
+// ─── Apply styles ───────────────────────────────────────────────────────────
+function dpApply(prop, val) { if (selectedEl) selectedEl.style[prop] = val; }
+function dpGlobal(v, val) { if (!frameDoc) return; frameDoc.documentElement.style.setProperty(v, val); cssVarChanges[v] = val; }
+function dpGlobalFont(val) { if (frameDoc) frameDoc.body.style.fontSize = val+'px'; }
+function adjustCtaY(val) {
+  if (!frameDoc) return;
+  frameDoc.querySelectorAll('.nav-cta').forEach(function(el){ el.style.position = 'relative'; el.style.top = val + 'px'; });
+}
+function dpResetElement() { if (!selectedEl) return; selectedEl.setAttribute('style', originalStyles.get(selectedEl)||''); selectedEl.classList.add('__selected'); }
+function dpResetAll() {
+  if (!confirm('Reset ALL changes?')) return;
+  originalStyles.forEach(function(o,el){ el.setAttribute('style',o); });
+  ['--black','--charcoal','--card','--border','--red','--red-br','--gold','--white','--topbar'].forEach(function(v){ frameDoc && frameDoc.documentElement.style.removeProperty(v); });
+  if (frameDoc) frameDoc.body.style.fontSize = '';
+  cssVarChanges = {};
+  setStatus('All changes reset.', false);
+}
+
+// ─── Snapshots ──────────────────────────────────────────────────────────────
+function dpSaveSnapshot() {
+  var now = new Date();
+  var label = now.getHours()+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+  var snap = { label: label, vars: Object.assign({}, cssVarChanges) };
+  snapshots.push(snap);
+  var list = document.getElementById('hist-list');
+  var item = document.createElement('div');
+  item.className = 'hist-item';
+  item.innerHTML = '<span>Snapshot '+snapshots.length+' — '+label+'</span><span class="hist-restore">Restore</span>';
+  var idx = snapshots.length-1;
+  item.querySelector('.hist-restore').addEventListener('click', function(){ restoreSnapshot(idx); });
+  if (list.querySelector('div[style]')) list.innerHTML = '';
+  list.appendChild(item);
+  saveDraft();
+  setStatus('Snapshot '+snapshots.length+' saved', true);
+}
+function restoreSnapshot(idx) {
+  var snap = snapshots[idx]; if (!snap || !frameDoc) return;
+  Object.keys(snap.vars).forEach(function(v){ frameDoc.documentElement.style.setProperty(v, snap.vars[v]); });
+  setStatus('Snapshot '+(idx+1)+' restored', true);
+}
+
+// ─── Autosave / draft ───────────────────────────────────────────────────────
+function saveDraft() {
+  var draft = { ts: Date.now(), vars: cssVarChanges, wbStrokes: wbStrokes };
+  try {
+    localStorage.setItem('lts_mgr_draft', JSON.stringify(draft));
+    showDraftBadge();
+  } catch(e) {}
+}
+function startAutosave() {
+  autosaveTimer = setInterval(function() {
+    if (Object.keys(cssVarChanges).length || wbStrokes.length) saveDraft();
+  }, 30000);
+}
+function showDraftBadge() {
+  var b = document.getElementById('draft-badge');
+  b.classList.add('visible');
+  setTimeout(function(){ b.classList.remove('visible'); }, 3000);
+}
+function checkDraftOnLoad() {
+  try {
+    var raw = localStorage.getItem('lts_mgr_draft');
+    if (!raw) return;
+    var draft = JSON.parse(raw);
+    var mins = Math.round((Date.now() - draft.ts) / 60000);
+    var label = mins < 2 ? 'just now' : mins + ' min ago';
+    var restore = confirm('A draft was autosaved ' + label + '. Restore it?');
+    if (restore) applyDraft(draft);
+  } catch(e) {}
+}
+function loadDraftManual() {
+  try {
+    var raw = localStorage.getItem('lts_mgr_draft');
+    if (!raw) { setStatus('No draft found.', false); return; }
+    applyDraft(JSON.parse(raw));
+    setStatus('Draft restored.', true);
+  } catch(e) { setStatus('Could not load draft.', false); }
+}
+function applyDraft(draft) {
+  if (draft.vars && frameDoc) {
+    Object.keys(draft.vars).forEach(function(v){ frameDoc.documentElement.style.setProperty(v, draft.vars[v]); });
+    cssVarChanges = Object.assign({}, draft.vars);
+  }
+  if (draft.wbStrokes && draft.wbStrokes.length) {
+    wbStrokes = draft.wbStrokes;
+    redrawCanvas();
+  }
+}
+
+// ─── Whiteboard ─────────────────────────────────────────────────────────────
+var canvas, ctx;
+function initWhiteboard() {
+  canvas = document.getElementById('wb-canvas');
+  ctx = canvas.getContext('2d');
+  canvas.addEventListener('mousedown', wbMouseDown);
+  canvas.addEventListener('mousemove', wbMouseMove);
+  canvas.addEventListener('mouseup', wbMouseUp);
+  canvas.addEventListener('mouseleave', wbMouseUp);
+  window.addEventListener('resize', resizeCanvas);
+  document.getElementById('wb-color').addEventListener('input', function(){ /* color picked live */ });
+}
+function resizeCanvas() {
+  var inner = document.getElementById('preview-inner');
+  canvas.width = inner.offsetWidth;
+  canvas.height = inner.offsetHeight;
+  redrawCanvas();
+}
+function toggleWhiteboard() {
+  wbActive = !wbActive;
+  canvas.classList.toggle('active', wbActive);
+  document.getElementById('wb-toolbar').classList.toggle('active', wbActive);
+  document.getElementById('wb-toggle-btn').classList.toggle('wb-active', wbActive);
+  if (wbActive) { stopPicking(); setStatus('Whiteboard ON — draw freely over the preview', true); }
+  else { if (!isGuest) startPicking(); setStatus('Whiteboard OFF', true); }
+}
+function setWbTool(t) {
+  wbTool = t;
+  document.querySelectorAll('.wb-tool').forEach(function(b){ b.classList.remove('active'); });
+  document.getElementById('wb-'+t).classList.add('active');
+  canvas.style.cursor = t === 'eraser' ? 'cell' : t === 'text' ? 'text' : 'crosshair';
+  // Hide pending text input
+  document.getElementById('wb-text-input').style.display = 'none';
+  wbTextPending = null;
+}
+function getWbColor() { return document.getElementById('wb-color').value; }
+function getWbSize()  { return parseInt(document.getElementById('wb-size').value); }
+
+function wbMouseDown(e) {
+  var rect = canvas.getBoundingClientRect();
+  var x = e.clientX - rect.left, y = e.clientY - rect.top;
+  if (wbTool === 'text') { placeTextInput(x, y); return; }
+  wbDrawing = true;
+  wbCurrentStroke = { tool: wbTool, color: getWbColor(), size: getWbSize(), points: [[x,y]] };
+  ctx.beginPath(); ctx.moveTo(x, y);
+}
+function wbMouseMove(e) {
+  var rect = canvas.getBoundingClientRect();
+  var x = e.clientX - rect.left, y = e.clientY - rect.top;
+  // Broadcast cursor
+  broadcast({ type: 'cursor', x: x/canvas.width, y: y/canvas.height, name: myName, color: myColor });
+  if (!wbDrawing) return;
+  wbCurrentStroke.points.push([x,y]);
+  if (wbTool === 'eraser') {
+    ctx.clearRect(x - getWbSize()*2, y - getWbSize()*2, getWbSize()*4, getWbSize()*4);
+  } else {
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = getWbColor();
+    ctx.lineWidth = getWbSize();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    ctx.stroke();
+  }
+}
+function wbMouseUp(e) {
+  if (!wbDrawing) return;
+  wbDrawing = false;
+  if (wbCurrentStroke && wbCurrentStroke.points.length > 1) {
+    wbStrokes.push(wbCurrentStroke);
+    broadcast({ type: 'stroke', stroke: wbCurrentStroke });
+    saveDraft();
+  }
+  wbCurrentStroke = null;
+}
+function placeTextInput(x, y) {
+  var inp = document.getElementById('wb-text-input');
+  inp.style.display = 'block';
+  inp.style.left = x + 'px';
+  inp.style.top  = y + 'px';
+  inp.value = '';
+  inp.focus();
+  wbTextPending = { x: x, y: y };
+  inp.onkeydown = function(e) {
+    if (e.key === 'Enter') {
+      var text = inp.value.trim();
+      if (text) {
+        var stroke = { tool: 'text', x: wbTextPending.x, y: wbTextPending.y, text: text, color: getWbColor(), size: getWbSize() };
+        wbStrokes.push(stroke);
+        drawTextStroke(stroke);
+        broadcast({ type: 'stroke', stroke: stroke });
+        saveDraft();
+      }
+      inp.style.display = 'none';
+      inp.value = '';
+      wbTextPending = null;
+    }
+    if (e.key === 'Escape') { inp.style.display = 'none'; wbTextPending = null; }
+  };
+}
+function drawTextStroke(s) {
+  ctx.font = 'bold ' + (s.size * 3 + 10) + 'px Barlow, sans-serif';
+  ctx.fillStyle = s.color;
+  ctx.fillText(s.text, s.x, s.y);
+}
+function drawStroke(s) {
+  if (s.tool === 'text') { drawTextStroke(s); return; }
+  if (s.tool === 'eraser') {
+    s.points.forEach(function(p){ ctx.clearRect(p[0]-s.size*2, p[1]-s.size*2, s.size*4, s.size*4); });
+    return;
+  }
+  if (!s.points || s.points.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(s.points[0][0], s.points[0][1]);
+  for (var i = 1; i < s.points.length; i++) ctx.lineTo(s.points[i][0], s.points[i][1]);
+  ctx.strokeStyle = s.color;
+  ctx.lineWidth = s.size;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.stroke();
+}
+function redrawCanvas() {
+  if (!ctx) return;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  wbStrokes.forEach(drawStroke);
+}
+function clearWhiteboard() {
+  if (!confirm('Clear all whiteboard marks?')) return;
+  wbStrokes = [];
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  broadcast({ type: 'clear' });
+  saveDraft();
+}
+
+// ─── PeerJS collaboration ───────────────────────────────────────────────────
+function initPeer() {
+  try {
+    peer = new Peer();
+    peer.on('open', function(id) {
+      if (isGuest) {
+        // Auto-connect to host
+        var conn = peer.connect(joinId, { reliable: true });
+        conn.on('open', function() {
+          hostConn = conn;
+          setStatus('Connected to session — whiteboard active', true);
+          conn.send({ type: 'hello', name: myName, color: myColor });
+          if (!wbActive) toggleWhiteboard();
+        });
+        conn.on('data', function(d) { handleData(d, conn); });
+        conn.on('close', function() { setStatus('Disconnected from session', false); });
+      } else {
+        // Host: listen for connections
+        peer.on('connection', function(conn) {
+          guestConns.push(conn);
+          conn.on('open', function() {
+            // Send existing strokes to newcomer
+            conn.send({ type: 'init', strokes: wbStrokes });
+            updatePeersDisplay();
+          });
+          conn.on('data', function(d) { handleData(d, conn); });
+          conn.on('close', function() {
+            guestConns = guestConns.filter(function(c){ return c !== conn; });
+            updatePeersDisplay();
+            setStatus('A collaborator left', false);
+          });
+        });
+        // Build share URL
+        document.getElementById('share-url').value = location.origin + location.pathname + '?join=' + id;
+        setStatus('Ready — click Share to invite collaborators', true);
+      }
+    });
+    peer.on('error', function(e) {
+      setStatus('Collab unavailable (no internet?) — working locally', false);
+    });
+  } catch(e) {
+    setStatus('PeerJS not loaded — working locally', false);
+  }
+}
+function handleData(d, fromConn) {
+  if (d.type === 'hello') {
+    fromConn._name = d.name; fromConn._color = d.color;
+    updatePeersDisplay();
+    setStatus(d.name + ' joined the session', true);
+    // Relay to all other guests
+    if (!isGuest) relayExcept(d, fromConn);
+  }
+  if (d.type === 'init') {
+    wbStrokes = d.strokes || [];
+    redrawCanvas();
+  }
+  if (d.type === 'stroke') {
+    wbStrokes.push(d.stroke);
+    drawStroke(d.stroke);
+    if (!isGuest) relayExcept(d, fromConn);
+  }
+  if (d.type === 'clear') {
+    wbStrokes = [];
+    ctx && ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (!isGuest) relayExcept(d, fromConn);
+  }
+  if (d.type === 'cursor') {
+    showPeerCursor(fromConn._name || 'Guest', fromConn._color || '#aaa', d.x, d.y);
+    if (!isGuest) relayExcept(d, fromConn);
+  }
+}
+function broadcast(msg) {
+  if (isGuest && hostConn) { try { hostConn.send(msg); } catch(e){} }
+  else guestConns.forEach(function(c){ try { c.send(msg); } catch(e){} });
+}
+function relayExcept(msg, skip) {
+  guestConns.forEach(function(c){ if (c !== skip) { try { c.send(msg); } catch(e){} } });
+}
+function updatePeersDisplay() {
+  var el = document.getElementById('peers-display');
+  el.innerHTML = '';
+  var all = [{name:'Mike', color:'#cc1111'}].concat(
+    guestConns.map(function(c){ return {name:c._name||'?', color:c._color||'#aaa'}; })
+  );
+  all.forEach(function(p){
+    var dot = document.createElement('div');
+    dot.className = 'peer-dot';
+    dot.style.background = p.color;
+    dot.title = p.name;
+    dot.textContent = p.name[0].toUpperCase();
+    el.appendChild(dot);
+  });
+}
+
+// ─── Peer cursors ───────────────────────────────────────────────────────────
+var cursorEls = {};
+var cursorTimers = {};
+function showPeerCursor(name, color, rx, ry) {
+  if (!canvas) return;
+  var x = rx * canvas.width, y = ry * canvas.height;
+  if (!cursorEls[name]) {
+    var el = document.createElement('div');
+    el.className = 'peer-cursor';
+    el.innerHTML = '<div class="peer-cursor-dot" style="background:'+color+'"></div><div class="peer-cursor-label" style="background:'+color+'">'+name+'</div>';
+    document.getElementById('peer-cursors').appendChild(el);
+    cursorEls[name] = el;
+  }
+  cursorEls[name].style.left = x+'px';
+  cursorEls[name].style.top  = y+'px';
+  cursorEls[name].style.display = 'flex';
+  clearTimeout(cursorTimers[name]);
+  cursorTimers[name] = setTimeout(function(){ if(cursorEls[name]) cursorEls[name].style.display='none'; }, 3000);
+}
+
+// ─── Share modal ─────────────────────────────────────────────────────────────
+function openShareModal() { document.getElementById('share-modal').classList.add('open'); }
+function closeShareModal() { document.getElementById('share-modal').classList.remove('open'); }
+function copyShareUrl() {
+  var u = document.getElementById('share-url').value;
+  navigator.clipboard.writeText(u).then(function(){
+    setStatus('Share link copied!', true);
+    closeShareModal();
+  });
+}
+
+// ─── Tab switching ───────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.main-tab').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); p.style.display='none'; });
+  var panel = document.getElementById('tab-'+name);
+  panel.classList.add('active');
+  panel.style.display = (name==='design') ? 'flex' : 'block';
+  if (name==='design') { panel.style.flexDirection='column'; panel.style.overflow='hidden'; }
+  else { panel.style.overflow='auto'; }
+}
+function dsubTab(name, btn) {
+  document.querySelectorAll('.dsub').forEach(function(b){ b.classList.remove('active'); });
+  btn.classList.add('active');
+  ['element','global','history'].forEach(function(t){
+    var el = document.getElementById('dsub-'+t);
+    el.style.display = (t===name)?'block':'none';
+    if (t===name){ el.style.flex='1'; el.style.overflowY='auto'; }
+  });
+}
+
+// ─── Content helpers ─────────────────────────────────────────────────────────
+function setSiteEl(sel, val) { if (frameDoc) frameDoc.querySelectorAll(sel).forEach(function(el){ el.textContent=val; }); }
+function setLinks(sel, val, type) {
+  if (!frameDoc) return;
+  frameDoc.querySelectorAll(sel).forEach(function(el){
+    if (type==='tel'){ el.href='tel:+1'+val.replace(/\D/g,''); el.textContent=val; }
+  });
+}
+function setContent(sel, val){ setSiteEl(sel, val); }
+
+// ─── Gallery manager ──────────────────────────────────────────────────────────
+var ALL_PHOTOS = [
+  { file: 'photos/lts-mustang-hero.webp',      label: 'LTS Mustang' },
+  { file: 'photos/shop-exterior.webp',          label: 'Shop Exterior' },
+  { file: 'photos/camaro-zl1.webp',             label: 'Camaro ZL1' },
+  { file: 'photos/maserati-brakes.webp',        label: 'Maserati Brakes' },
+  { file: 'photos/maserati-engine.webp',        label: 'Maserati Engine' },
+  { file: 'photos/mercedes-gl.webp',            label: 'Mercedes GL' },
+  { file: 'photos/bmw-teardown.webp',           label: 'BMW Teardown' },
+  { file: 'photos/engine-pull-lift.webp',       label: 'Engine Pull on Lift' },
+  { file: 'photos/rebuilt-v8.webp',             label: 'Rebuilt V8' },
+  { file: 'photos/audi-rs-300zx.webp',          label: 'Audi RS + 300ZX' },
+  { file: 'photos/mechanic-lino.webp',          label: 'Mechanic Lino' },
+  { file: 'photos/audi-engine-teardown.webp',   label: 'Audi Engine Teardown' },
+  { file: 'photos/gmc-truck-repair.webp',       label: 'GMC Truck Repair' },
+  { file: 'photos/thermostat-diagnostic.webp',  label: 'Thermostat Diagnostic' },
+  { file: 'photos/classic-buick.webp',          label: 'Classic Buick' },
+  { file: 'photos/engine-removed.webp',         label: 'Engine Removed' },
+  { file: 'photos/bmw-m-engine.webp',           label: 'BMW M Engine' },
+];
+
+function buildGalleryManager() {
+  if (!frameDoc) return;
+  var slides = Array.from(frameDoc.querySelectorAll('#slides .slide'));
+  var grid = document.getElementById('gallery-grid');
+  if (!grid) return;
+  grid.innerHTML = '';
+  document.getElementById('slide-count').textContent = '(' + slides.length + ' photos)';
+
+  slides.forEach(function(slide) {
+    var img = slide.querySelector('img');
+    var cap = slide.querySelector('.slide-cap');
+    if (!img) return;
+    var src = img.getAttribute('src') || '';
+    var fname = src.split('/').pop();
+    var capText = cap ? cap.textContent.trim() : '';
+
+    var card = document.createElement('div');
+    card.className = 'gal-card';
+
+    var thumb = document.createElement('img');
+    thumb.className = 'gal-thumb';
+    thumb.src = src;
+    thumb.alt = fname;
+
+    var info = document.createElement('div');
+    info.className = 'gal-info';
+    info.innerHTML = '<div class="gal-name">' + fname + '</div><div class="gal-cap">' + capText + '</div>';
+
+    var rmBtn = document.createElement('button');
+    rmBtn.className = 'gal-rm';
+    rmBtn.title = 'Remove from gallery';
+    rmBtn.textContent = '✕';
+    rmBtn.onclick = function() {
+      slide.remove();
+      if (frameWin && frameWin.slideshowReinit) frameWin.slideshowReinit();
+      buildGalleryManager();
+      setStatus('Removed: ' + fname, true);
+    };
+
+    card.appendChild(thumb);
+    card.appendChild(info);
+    card.appendChild(rmBtn);
+    grid.appendChild(card);
+  });
+
+  if (slides.length === 0) {
+    grid.innerHTML = '<div style="color:#555;font-size:12px;text-align:center;padding:16px;">No slides. Add photos below.</div>';
+  }
+
+  // Populate add dropdown — show all photos
+  var sel = document.getElementById('add-photo-select');
+  if (sel) {
+    sel.innerHTML = '<option value="">— choose a photo to add —</option>';
+    ALL_PHOTOS.forEach(function(p) {
+      var opt = document.createElement('option');
+      opt.value = p.file;
+      opt.textContent = p.label + ' (' + p.file.split('/').pop() + ')';
+      sel.appendChild(opt);
+    });
+  }
+}
+
+function addPhotoToGallery() {
+  if (!frameDoc) { setStatus('Preview not loaded', false); return; }
+  var file = document.getElementById('add-photo-select').value;
+  var cap  = document.getElementById('add-photo-cap').value.trim();
+  if (!file) { setStatus('Choose a photo first', false); return; }
+
+  var container = frameDoc.getElementById('slides');
+  if (!container) { setStatus('Could not find slideshow in preview', false); return; }
+
+  var photo = ALL_PHOTOS.find(function(p){ return p.file === file; });
+  var slide = frameDoc.createElement('div');
+  slide.className = 'slide';
+  slide.innerHTML = '<img src="' + file + '" alt="' + (photo ? photo.label : '') + '" loading="lazy">' +
+    '<div class="slide-cap">' + (cap || (photo ? photo.label : '')) + '</div>';
+  container.appendChild(slide);
+
+  if (frameWin && frameWin.slideshowReinit) frameWin.slideshowReinit();
+
+  document.getElementById('add-photo-select').value = '';
+  document.getElementById('add-photo-cap').value = '';
+  buildGalleryManager();
+  setStatus('Added: ' + (photo ? photo.label : file), true);
+}
+
+// ─── Netlify token ────────────────────────────────────────────────────────────
+var NETLIFY_TOKEN = 'nfp_ByDBcpzCND5BQrVVkyrfXRKisHKDymBV1939';
+
+// ─── Email config ─────────────────────────────────────────────────────────────
+function saveEC() {
+  var map = { 'ec-owner-email':'lts_owner_email', 'ec-ejs-key':'lts_ejs_key', 'ec-ejs-svc':'lts_ejs_svc', 'ec-ejs-tpl-owner':'lts_ejs_tpl_owner', 'ec-ejs-tpl-cust':'lts_ejs_tpl_cust' };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id); if (el) localStorage.setItem(map[id], el.value.trim());
+  });
+  var note = document.getElementById('ec-saved'); if (note) { note.style.display='block'; setTimeout(function(){ note.style.display='none'; }, 2000); }
+}
+(function loadEC() {
+  document.addEventListener('DOMContentLoaded', function() {
+    var map = { 'ec-owner-email':'lts_owner_email', 'ec-ejs-key':'lts_ejs_key', 'ec-ejs-svc':'lts_ejs_svc', 'ec-ejs-tpl-owner':'lts_ejs_tpl_owner', 'ec-ejs-tpl-cust':'lts_ejs_tpl_cust' };
+    Object.keys(map).forEach(function(id) {
+      var el = document.getElementById(id), val = localStorage.getItem(map[id]);
+      if (el && val) el.value = val;
+    });
+  });
+})();
+
+// ─── Publish to Netlify ───────────────────────────────────────────────────────
+async function publishToNetlify() {
+  var token = NETLIFY_TOKEN;
+  if (!token) { alert('Netlify token not configured.'); return; }
+
+  var siteId = 'b37d2fd8-28bd-45cc-bb2f-9cdbadc89c38';
+  var btn = document.getElementById('publish-btn');
+  var log = document.getElementById('publish-progress');
+
+  btn.disabled = true;
+  log.classList.add('visible');
+  log.textContent = '';
+
+  function logLine(msg) { log.textContent += msg + '\n'; log.scrollTop = log.scrollHeight; }
+
+  try {
+    logLine('⏳ Building site file…');
+
+    // Get live site HTML (includes any edits made in this session)
+    var siteHtml = frameDoc
+      ? '<!DOCTYPE html>\n' + frameDoc.documentElement.outerHTML
+      : await fetch(SITE_SRC).then(function(r){ return r.text(); });
+
+    var managerHtml = await fetch('lts_manager.html').then(function(r){ return r.text(); });
+    var logoBlob    = await fetch('lts_logo.png').then(function(r){ return r.blob(); });
+
+    logLine('📦 Creating zip…');
+    var zip = new JSZip();
+    zip.file('index.html',                  siteHtml);
+    zip.file('lts_motorworks_website.html', siteHtml);
+    zip.file('lts_manager.html',            managerHtml);
+    zip.file('lts_logo.png',               logoBlob);
+
+    logLine('📷 Bundling photos…');
+    var photoFiles = [
+      'photos/lts-mustang-hero.webp','photos/shop-exterior.webp','photos/camaro-zl1.webp',
+      'photos/maserati-brakes.webp','photos/maserati-engine.webp','photos/mercedes-gl.webp',
+      'photos/bmw-teardown.webp','photos/engine-pull-lift.webp','photos/rebuilt-v8.webp',
+      'photos/audi-rs-300zx.webp','photos/mechanic-lino.webp','photos/audi-engine-teardown.webp',
+      'photos/gmc-truck-repair.webp','photos/thermostat-diagnostic.webp','photos/classic-buick.webp',
+      'photos/engine-removed.webp','photos/bmw-m-engine.webp'
+    ];
+    await Promise.all(photoFiles.map(async function(p) {
+      try {
+        var blob = await fetch(p).then(function(r){ return r.blob(); });
+        zip.file(p, blob);
+      } catch(e) { logLine('  ⚠ skipped ' + p); }
+    }));
+
+    var zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
+    logLine('📤 Uploading to Netlify (' + (zipBlob.size / 1024).toFixed(0) + ' KB)…');
+
+    var res = await fetch('https://api.netlify.com/api/v1/sites/' + siteId + '/deploys', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + token, 'Content-Type': 'application/zip' },
+      body: zipBlob
+    });
+
+    if (!res.ok) {
+      var err = await res.json().catch(function(){ return {}; });
+      throw new Error(err.message || ('HTTP ' + res.status));
+    }
+
+    var deploy = await res.json();
+    logLine('🔄 Processing deploy ' + deploy.id + '…');
+
+    // Poll for ready
+    for (var i = 0; i < 20; i++) {
+      await new Promise(function(r){ setTimeout(r, 3000); });
+      var check = await fetch('https://api.netlify.com/api/v1/deploys/' + deploy.id, {
+        headers: { Authorization: 'Bearer ' + token }
+      }).then(function(r){ return r.json(); });
+      logLine('   state: ' + check.state);
+      if (check.state === 'ready') {
+        logLine('✅ Published! → ' + check.ssl_url);
+        setStatus('Published to Netlify ✅', true);
+        btn.disabled = false;
+        return;
+      }
+      if (check.state === 'error') throw new Error('Netlify reported an error during deploy.');
+    }
+    throw new Error('Timed out waiting for deploy to go live.');
+
+  } catch(e) {
+    logLine('❌ ' + e.message);
+    setStatus('Publish failed: ' + e.message, false);
+    btn.disabled = false;
+  }
+}
+
+// ─── Export ───────────────────────────────────────────────────────────────────
+function generateExport() {
+  var vars = Object.assign({'--black':'#3f4046','--charcoal':'#4a4b52','--card':'#54555d','--border':'#63646d','--red':'#cc1111','--red-br':'#e62222','--gold':'#e8b800','--white':'#ffffff'}, cssVarChanges);
+  document.getElementById('export-code').value = ':root {\n'+Object.keys(vars).map(function(k){return '  '+k+': '+vars[k]+';';}).join('\n')+'\n}';
+  var overrides = [];
+  originalStyles.forEach(function(orig,el){var cur=el.getAttribute('style')||''; if(cur&&cur!==orig) overrides.push('/* '+el.tagName.toLowerCase()+' */');});
+  document.getElementById('export-overrides').value = overrides.length ? overrides.join('\n') : '/* No element-level changes. */';
+  setStatus('Export generated.', true);
+}
+function copyExport() {
+  var t = document.getElementById('export-code').value;
+  if (!t) { generateExport(); t = document.getElementById('export-code').value; }
+  navigator.clipboard.writeText(t).then(function(){ setStatus('Copied!', true); });
+}
+function downloadExport() {
+  if (!frameDoc) { alert('No frame loaded.'); return; }
+  var blob = new Blob(['<!DOCTYPE html>\n'+frameDoc.documentElement.outerHTML], {type:'text/html'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='lts_motorworks_website.html'; a.click();
+  setStatus('Download started.', true);
+}
+
+// ─── Viewport ─────────────────────────────────────────────────────────────────
+function setViewport(w, btn) {
+  document.querySelectorAll('.vp-btn').forEach(function(b){ if(['📱 375','💻 768','🖥 Full'].some(function(l){return b.textContent.includes(l.split(' ')[1])||b.textContent===l;})) b.classList.remove('active'); });
+  if (btn) btn.classList.add('active');
+  var f = document.getElementById('site-frame');
+  if (w==='100%'){ f.style.width='100%'; f.style.maxWidth=''; }
+  else { f.style.width=w+'px'; f.style.maxWidth=w+'px'; }
+  resizeCanvas();
+}
+function reloadFrame() { frame.src = SITE_SRC; setStatus('Reloading…', false); }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function setHint(msg, active) { var h=document.getElementById('hint-bar'); h.textContent=msg; h.className=active?'active':''; }
+function setStatus(msg, ok) { document.getElementById('status-msg').textContent=msg; document.getElementById('status-dot').style.background=ok?'#2a7a2a':'#7a2a2a'; }
+function pad(n){ return String(n).padStart(2,'0'); }
+function rgbToHex(rgb){
+  if(!rgb||rgb==='transparent') return '#ffffff';
+  var m=rgb.match(/\d+/g); if(!m||m.length<3) return '#ffffff';
+  return '#'+[m[0],m[1],m[2]].map(function(x){return ('0'+parseInt(x).toString(16)).slice(-2);}).join('');
+}
+function randomColor(){
+  var cols=['#2a7aff','#ff6b2a','#2aff7a','#cc2aff','#2affee','#ffcc2a'];
+  return cols[Math.floor(Math.random()*cols.length)];
+}
+</script>
+</body>
+</html>
+
+
+
