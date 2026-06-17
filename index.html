@@ -432,9 +432,9 @@ section { padding: 88px 48px; }
 
 .gallery-item { cursor: zoom-in; }
 
-.gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.35s; }
+.gallery-item img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.35s, filter 0.35s; filter: contrast(1.08) saturate(1.05); }
 
-.gallery-item:hover img { transform: scale(1.04); }
+.gallery-item:hover img { transform: scale(1.06); filter: brightness(1.08) saturate(1.3) contrast(1.18); }
 
 /* LIGHTBOX */
 #lightbox { display: none; position: fixed; inset: 0; z-index: 9999; background: rgba(0,0,0,0.92); align-items: center; justify-content: center; padding: 24px; }
@@ -1116,17 +1116,17 @@ footer { background: #34353b; padding: 56px 48px 28px; border-top: 1px solid var
 
     <div class="gallery-grid" style="margin-top:32px;">
 
-      <div class="gallery-item"><img src="photos/maserati-engine.webp" alt="Maserati engine" loading="lazy"><div class="gallery-cap"><span>EUROPEAN SPECIALIST</span>Maserati V8 Engine Bay</div></div>
+      <div class="gallery-item"><img src="photos/maserati-engine-thumb.webp" data-full="photos/maserati-engine.webp" alt="Maserati engine" loading="lazy"><div class="gallery-cap"><span>EUROPEAN SPECIALIST</span>Maserati V8 Engine Bay</div></div>
 
-      <div class="gallery-item"><img src="photos/engine-pull-lift.webp" alt="Engine removal" loading="lazy"><div class="gallery-cap"><span>MAJOR ENGINE WORK</span>Complete Engine Removal</div></div>
+      <div class="gallery-item"><img src="photos/engine-pull-lift-thumb.webp" data-full="photos/engine-pull-lift.webp" alt="Engine removal" loading="lazy"><div class="gallery-cap"><span>MAJOR ENGINE WORK</span>Complete Engine Removal</div></div>
 
-      <div class="gallery-item"><img src="photos/rebuilt-v8.webp" alt="Rebuilt V8" loading="lazy"><div class="gallery-cap"><span>REBUILDS</span>Fresh V8 — Ready to Install</div></div>
+      <div class="gallery-item"><img src="photos/rebuilt-v8-thumb.webp" data-full="photos/rebuilt-v8.webp" alt="Rebuilt V8" loading="lazy"><div class="gallery-cap"><span>REBUILDS</span>Fresh V8 — Ready to Install</div></div>
 
-      <div class="gallery-item"><img src="photos/bmw-m-engine.webp" alt="BMW M" loading="lazy"><div class="gallery-cap"><span>BMW SPECIALIST</span>BMW M — Engine Service</div></div>
+      <div class="gallery-item"><img src="photos/bmw-m-engine-thumb.webp" data-full="photos/bmw-m-engine.webp" alt="BMW M" loading="lazy"><div class="gallery-cap"><span>BMW SPECIALIST</span>BMW M — Engine Service</div></div>
 
-      <div class="gallery-item"><img src="photos/audi-engine-teardown.webp" alt="Audi teardown" loading="lazy"><div class="gallery-cap"><span>GERMAN IMPORTS</span>Audi Deep Teardown</div></div>
+      <div class="gallery-item"><img src="photos/audi-engine-teardown-thumb.webp" data-full="photos/audi-engine-teardown.webp" alt="Audi teardown" loading="lazy"><div class="gallery-cap"><span>GERMAN IMPORTS</span>Audi Deep Teardown</div></div>
 
-      <div class="gallery-item"><img src="photos/gmc-truck-repair.webp" alt="GMC truck" loading="lazy" style="object-position:top;"><div class="gallery-cap"><span>TRUCKS &amp; DIESEL</span>GMC Truck Repair</div></div>
+      <div class="gallery-item"><img src="photos/gmc-truck-repair-thumb.webp" data-full="photos/gmc-truck-repair.webp" alt="GMC truck" loading="lazy" style="object-position:top;"><div class="gallery-cap"><span>TRUCKS &amp; DIESEL</span>GMC Truck Repair</div></div>
 
     </div>
 
@@ -1802,8 +1802,9 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
   var lbImg = document.getElementById('lightbox-img');
   document.querySelectorAll('.gallery-item').forEach(function(item){
     item.addEventListener('click', function(){
-      var src = item.querySelector('img').src;
-      var alt = item.querySelector('img').alt;
+      var imgEl = item.querySelector('img');
+      var src = imgEl.dataset.full || imgEl.src;
+      var alt = imgEl.alt;
       lbImg.src = src;
       lbImg.alt = alt;
       lb.classList.add('open');
