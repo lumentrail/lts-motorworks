@@ -817,9 +817,11 @@ footer { background: #34353b; padding: 56px 48px 28px; border-top: 1px solid var
 
   .slideshow { aspect-ratio: 4/3; }
 
-  .feature-photo { height: auto; }
+  .feature-photo { display: flex; flex-direction: column; }
 
-  .feature-overlay { padding: 24px; }
+  .feature-photo img { order: 2; }
+
+  .feature-overlay { position: relative; inset: auto; order: 1; background: #0a0a0e; padding: 28px 24px; }
 
 }
 
@@ -1063,50 +1065,31 @@ footer { background: #34353b; padding: 56px 48px 28px; border-top: 1px solid var
 
     <div class="slideshow" id="slideshow">
 
-      <div class="slides" id="slides">
+            <div class="slides" id="slides">
 
+                <div class="slide"><img src="photos/shop-exterior-old-signage.webp" alt="LTS Motorworks shop exterior" loading="lazy"><div class="slide-cap"><span>SINCE 2010 · ROUND LAKE BEACH, IL</span>1725 Wood St — <span class="lts-years"></span> years serving Lake County</div></div>
 
-        <div class="slide"><img src="photos/maserati-brakes.webp" alt="Maserati brake service" loading="lazy"><div class="slide-cap"><span>EXOTIC SPECIALIST</span>Maserati — full brake overhaul</div></div>
+                <div class="slide"><img src="photos/maserati-and-dodge-charger-on-lifts.webp" alt="Maserati and Dodge Charger on lifts" loading="lazy"><div class="slide-cap"><span>FULL SHOP</span>Two bays running — Maserati and Dodge Charger</div></div>
 
-        <div class="slide"><img src="photos/mercedes-gl.webp" alt="Mercedes GL in shop" loading="lazy"><div class="slide-cap"><span>EUROPEAN</span>Mercedes GL — in the bay</div></div>
+                <div class="slide"><img src="photos/audi-rs-300zx.webp" alt="Audi RS and Nissan 300ZX" loading="lazy"><div class="slide-cap"><span>EXOTICS WELCOME</span>Audi RS3 &amp; Nissan 300ZX</div></div>
 
+                <div class="slide"><img src="photos/classic-buick.webp" alt="Classic Buick" loading="lazy"><div class="slide-cap"><span>ALL MAKES &amp; ERAS</span>Classic Buick Electra — we love classics</div></div>
 
-        <div class="slide"><img src="photos/bmw-teardown.webp" alt="BMW engine work" loading="lazy"><div class="slide-cap"><span>BMW SPECIALIST</span>BMW 5-series — engine service</div></div>
+                <div class="slide"><img src="photos/v8-engine-bay-service.webp" alt="V8 engine bay service" loading="lazy"><div class="slide-cap"><span>ENGINE WORK</span>V8 engine bay — deep service in progress</div></div>
 
+                <div class="slide"><img src="photos/mercedes-gl.webp" alt="Mercedes GL in shop" loading="lazy"><div class="slide-cap"><span>EUROPEAN</span>Mercedes GL — in the bay</div></div>
 
-        <div class="slide"><img src="photos/audi-rs-300zx.webp" alt="Audi RS and Nissan 300ZX" loading="lazy"><div class="slide-cap"><span>EXOTICS WELCOME</span>Audi RS3 &amp; Nissan 300ZX</div></div>
+                <div class="slide"><img src="photos/bmw-teardown.webp" alt="BMW engine work" loading="lazy"><div class="slide-cap"><span>BMW SPECIALIST</span>BMW 5-series — engine service</div></div>
 
-        <div class="slide"><img src="photos/gmc-truck-repair.webp" alt="GMC truck repair" loading="lazy"><div class="slide-cap"><span>TRUCKS &amp; DIESEL</span>GMC — front end rebuild</div></div>
+                <div class="slide"><img src="photos/ford-excursion-towing-vw-beetle.webp" alt="Ford Excursion towing classic VW Beetle" loading="lazy"><div class="slide-cap"><span>WE'LL COME GET YOU</span>Even a VW Beetle can tow a Ford Excursion — call us</div></div>
 
-        <div class="slide"><img src="photos/thermostat-diagnostic.webp" alt="Diagnostic work" loading="lazy"><div class="slide-cap"><span>DIAGNOSTICS</span>Thermostat replacement — precision work</div></div>
+                <div class="slide"><img src="photos/ford-excursion-lift-side-view.webp" alt="Ford Excursion on lift side view" loading="lazy"><div class="slide-cap"><span>TRUCKS &amp; SUVs</span>Ford Excursion — undercarriage in progress</div></div>
 
-        <div class="slide"><img src="photos/classic-buick.webp" alt="Classic Buick" loading="lazy"><div class="slide-cap"><span>ALL MAKES &amp; ERAS</span>Classic Buick Electra — we love classics</div></div>
+                <div class="slide"><img src="photos/ford-excursion-on-lift.webp" alt="Ford Excursion on lift" loading="lazy"><div class="slide-cap"><span>TRUCKS &amp; SUVs</span>Ford Excursion — lifted for full service</div></div>
 
-        <div class="slide"><img src="photos/shop-exterior.webp" alt="LTS Motorworks shop" loading="lazy"><div class="slide-cap"><span>ROUND LAKE BEACH, IL</span>1725 Wood St — come see us</div></div>
+                <div class="slide"><img src="photos/thermostat-diagnostic.webp" alt="Diagnostic work" loading="lazy"><div class="slide-cap"><span>DIAGNOSTICS</span>Thermostat replacement — precision work</div></div>
 
-        <div class="slide"><img src="photos/maserati-and-dodge-charger-on-lifts.webp" alt="Maserati and Dodge Charger on lifts" loading="lazy"><div class="slide-cap"><span>FULL SHOP</span>Two bays running — Maserati and Dodge Charger</div></div>
-
-        <div class="slide"><img src="photos/ford-excursion-towing-vw-beetle.webp" alt="Ford Excursion towing classic VW Beetle" loading="lazy"><div class="slide-cap"><span>WE'LL COME GET YOU</span>Ford Excursion towing a classic VW Beetle</div></div>
-
-        <div class="slide"><img src="photos/ford-excursion-on-lift.webp" alt="Ford Excursion on lift" loading="lazy"><div class="slide-cap"><span>TRUCKS &amp; SUVs</span>Ford Excursion — lifted for full service</div></div>
-
-        <div class="slide"><img src="photos/ford-excursion-lift-side-view.webp" alt="Ford Excursion on lift side view" loading="lazy"><div class="slide-cap"><span>TRUCKS &amp; SUVs</span>Ford Excursion — undercarriage in progress</div></div>
-
-        <div class="slide"><img src="photos/v8-engine-bay-service.webp" alt="V8 engine bay service" loading="lazy"><div class="slide-cap"><span>ENGINE WORK</span>V8 engine bay — deep service in progress</div></div>
-
-        <div class="slide"><img src="photos/bmw-rodent-damaged-wiring.webp" alt="BMW rodent damaged wiring" loading="lazy"><div class="slide-cap"><span>ELECTRICAL REPAIR</span>BMW — rodent-damaged wiring harness replaced</div></div>
-
-        <div class="slide"><img src="photos/cracked-engine-mount-oil-leak.webp" alt="Cracked engine mount" loading="lazy"><div class="slide-cap"><span>DIAGNOSTICS</span>Cracked engine mount — caught before it got worse</div></div>
-
-        <div class="slide"><img src="photos/interior-dash-stripped-hvac.webp" alt="Interior stripped HVAC" loading="lazy"><div class="slide-cap"><span>HVAC SERVICE</span>Heater core replacement — complete disassembly</div></div>
-
-        <div class="slide"><img src="photos/hvac-heater-box-removed.webp" alt="HVAC heater box removed" loading="lazy"><div class="slide-cap"><span>HVAC SERVICE</span>Heater core and blower box — out for rebuild</div></div>
-
-
-        <div class="slide"><img src="photos/shop-exterior-old-signage.webp" alt="LTS Motorworks original shop exterior" loading="lazy"><div class="slide-cap"><span>SINCE 2010</span>LTS Motorworks — 15 years serving Round Lake Beach</div></div>
-
-        <div class="slide"><img src="photos/map-lts.png" alt="LTS Motorworks location map" loading="lazy"><div class="slide-cap"><span>FIND US</span>1725 Wood St, Round Lake Beach — off Rollins &amp; Rt 83</div></div>
-
+                <div class="slide"><img src="photos/map-lts.png" alt="LTS Motorworks location map" loading="lazy"><div class="slide-cap"><span>FIND US</span>1725 Wood St, Round Lake Beach — off Rollins &amp; Rt 83</div></div>
 
       </div>
 
@@ -1506,6 +1489,8 @@ footer { background: #34353b; padding: 56px 48px 28px; border-top: 1px solid var
 
 document.getElementById('footer-year').textContent = new Date().getFullYear();
 
+document.querySelectorAll('.lts-years').forEach(function(el){ el.textContent = new Date().getFullYear() - 2010; });
+
 (function(){
 
   var dotsContainer = document.getElementById('slide-dots');
@@ -1517,26 +1502,6 @@ document.getElementById('footer-year').textContent = new Date().getFullYear();
   var busy = false;
 
 
-
-  // Shuffle slides FIRST so dots map correctly
-
-  var container = document.getElementById('slides');
-
-  var els = Array.from(container.children);
-
-  for (var i = els.length - 1; i > 0; i--) {
-
-    var j = Math.floor(Math.random() * (i + 1));
-
-    container.appendChild(els[j]);
-
-    var tmp = els[i]; els[i] = els[j]; els[j] = tmp;
-
-  }
-
-
-
-  // Query AFTER shuffle
 
   var slides = document.querySelectorAll('#slides .slide');
 
