@@ -817,9 +817,9 @@ footer { background: #34353b; padding: 56px 48px 28px; border-top: 1px solid var
 
   .slideshow { aspect-ratio: 4/3; }
 
-  .feature-photo { display: flex; flex-direction: column; }
+  .feature-photo { display: flex; flex-direction: column; aspect-ratio: unset; overflow: visible; margin-bottom: 52px; }
 
-  .feature-photo img { order: 2; }
+  .feature-photo img { order: 2; width: 100%; height: 60vw; object-fit: cover; object-position: center; flex-shrink: 0; }
 
   .feature-overlay { position: relative; inset: auto; order: 1; background: #0a0a0e; padding: 28px 24px; }
 
