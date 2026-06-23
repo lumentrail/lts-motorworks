@@ -561,11 +561,11 @@ section { padding: 88px 48px; }
 
 /* CTA */
 
-.cta-band { position: relative; width: 100%; aspect-ratio: 1400/580; min-height: 280px; padding: 40px 48px; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; overflow: hidden; }
+.cta-band { position: relative; width: 100%; aspect-ratio: 1400/580; min-height: 280px; max-height: 650px; padding: 40px 48px; display: flex; align-items: center; justify-content: center; flex-direction: column; text-align: center; overflow: hidden; }
 
-.cta-bg { position: absolute; inset: 0; background-image: url('photos/LTS-outdoor-signage.png'); background-size: cover; background-position: center 38%; }
+.cta-bg { position: absolute; inset: 0; background-image: url('photos/LTS-outdoor-signage.png'); background-size: cover; background-position: 52% 52%; filter: contrast(1.2) saturate(1.5) brightness(1.1); }
 
-.cta-bg::after { content: ''; position: absolute; inset: 0; background: rgba(63,64,70,0.74); }
+.cta-bg::after { content: ''; position: absolute; inset: 0; background: rgba(63,64,70,0.62); }
 
 .cta-content { position: relative; z-index: 2; }
 
@@ -1374,7 +1374,7 @@ footer { background: #525359; padding: 56px 48px 28px; border-top: 1px solid var
 
 
 
-<div class="cta-band">
+<div class="cta-band" id="cta">
 
   <div class="cta-bg"></div>
 
