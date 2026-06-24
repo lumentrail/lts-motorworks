@@ -1,0 +1,14 @@
+{
+  "name": "LTS Motorworks",
+  "short_name": "LTS Motorworks",
+  "description": "Full-service auto repair in Round Lake Beach, IL",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#1c1d22",
+  "theme_color": "#cc1111",
+  "icons": [
+    { "src": "/favicon-96.png",  "sizes": "96x96",   "type": "image/png" },
+    { "src": "/favicon-180.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/favicon.svg",     "sizes": "any",     "type": "image/svg+xml" }
+  ]
+}
