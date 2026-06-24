@@ -841,8 +841,8 @@ footer { background: #525359; padding: 56px 48px 28px; border-top: 1px solid var
 
 @media (max-width: 600px) {
 
-  .slideshow { aspect-ratio: 4/3; }
-  .slide img { object-fit: fill; }
+  .slideshow { aspect-ratio: unset; transition: height 0.35s ease; }
+  .slide img { object-fit: contain; }
 
   .feature-photo { display: flex; flex-direction: column; aspect-ratio: unset; overflow: visible; margin-bottom: 52px; }
 
@@ -1631,6 +1631,20 @@ document.getElementById('footer-year').textContent = new Date().getFullYear();
 
 
 
+  function fitMobileSlideshow() {
+    if (window.innerWidth > 600) return;
+    var ss = document.getElementById('slideshow');
+    if (!ss) return;
+    var img = slides[current].querySelector('img');
+    function apply() {
+      if (img.naturalWidth && img.naturalHeight) {
+        ss.style.height = Math.round(ss.offsetWidth * img.naturalHeight / img.naturalWidth) + 'px';
+      }
+    }
+    if (img.complete && img.naturalWidth) { apply(); }
+    else { img.addEventListener('load', apply, { once: true }); }
+  }
+
   function goTo(n) {
 
     if (busy) return;
@@ -1646,6 +1660,8 @@ document.getElementById('footer-year').textContent = new Date().getFullYear();
     slides[current].classList.add('active');
 
     dotsContainer.children[current].classList.add('active');
+
+    fitMobileSlideshow();
 
     resetTimer();
 
@@ -1694,6 +1710,10 @@ document.getElementById('footer-year').textContent = new Date().getFullYear();
   };
 
 
+
+  fitMobileSlideshow();
+
+  window.addEventListener('resize', fitMobileSlideshow);
 
   resetTimer();
 
