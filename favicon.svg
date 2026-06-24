@@ -3,9 +3,7 @@
     .s1 { fill: #000000; }
     .s2 { fill: #ec0e20; }
     .s3 { fill: #fec71e; }
-    @media (prefers-color-scheme: dark) {
-      .s1, .s2, .s3 { stroke: #ffffff; stroke-width: 10; paint-order: stroke fill; }
-    }
+    .s1, .s2, .s3 { stroke: #ffffff; stroke-width: 30; paint-order: stroke fill; }
   </style>
   <g class="s1">
     <path d="M305.48 546.22 c-1.35 -1.72 -29.91 -47.88 -56.86 -92.06 -9.23 -15.26 -23.63 -38.77 -32 -52.31 -24.49 -39.88 -49.35 -80.86 -52.55 -86.40 l-3.08 -5.29 56 0 56.12 0 4.55 7.63 c4.80 8 87.02 137.11 124.55 195.82 11.69 18.09 21.17 33.23 21.17 33.48 0 0.37 -26.22 0.62 -58.34 0.62 -45.17 0 -58.58 -0.37 -59.57 -1.48z"/>
